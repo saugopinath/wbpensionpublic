@@ -10,10 +10,10 @@ Route::post('/public/validate/mobile', [ValidateMobileController::class, 'mobile
 Route::post('/public/validate/checkotp', [ValidateMobileController::class, 'otpcheck']);
 Route::post('/public/dashboard', [ValidateMobileController::class, 'guestdashboardcheck'])->middleware('GuestDashboardCheck');
 Route::post('/public/form/entry/personal', [PensionFormController::class, 'personalEntry']);
-Route::post('/public/form/entry/contact', [PensionFormController::class, 'contactEntry'])->middleware('GuestDashboardCheck');
-Route::post('/public/form/entry/bank', [PensionFormController::class, 'bankEntry'])->middleware('GuestDashboardCheck');
-Route::post('/public/form/entry/declaration', [PensionFormController::class, 'declarationEntry'])->middleware('GuestDashboardCheck');
-Route::post('/public/form/entry/encloser', [PensionFormController::class, 'encloserEntry'])->middleware('GuestDashboardCheck');
+Route::post('/public/form/entry/contact', [PensionFormController::class, 'contactEntry']);
+Route::post('/public/form/entry/bank', [PensionFormController::class, 'bankEntry']);
+Route::post('/public/form/entry/declaration', [PensionFormController::class, 'declarationEntry']);
+Route::post('/public/form/entry/encloser', [PensionFormController::class, 'encloserEntry']);
 
 
 

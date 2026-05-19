@@ -26,12 +26,19 @@ class ValidateMobileController extends Controller
     {
        // dd('ok');
         try {
-            if(!$this->notEmptyCheck($request)){
+            if(!TokenValidation::notEmptyCheck($request)){
                  return response()->json(['is_sucess' => false, 'error' => $this->data_not_supplied], 400);
               }
              $request_data = EncryptDecrypt::decrypt($request->data);
-             $mobile_no=$request_data['mobile_no'];
-             if(!$this->mobileNoValidation($mobile_no)){
+             $mobile_no=$request_data['formData']['mobile_no'];
+             //dd($mobile_no);
+             if(!TokenValidation::mobileNoValidation($mobile_no)){
+                 $errorMsg =  __('messages.mobilenoinvalid');
+                return response()->json(["is_success" => false,'error' => $errorMsg]);
+             }
+             $scheme_id=$request_data['extraData']['scheme_id'];
+             //dd($this->schemeValidation($scheme_id));
+             if(!TokenValidation::schemeValidation($scheme_id)){
                  $errorMsg =  __('messages.mobilenoinvalid');
                 return response()->json(["is_success" => false,'error' => $errorMsg]);
              }
@@ -88,13 +95,14 @@ __('messages.govtwb').";
     }
     public function otpcheck(Request $request)
     {
-        if(!$this->notEmptyCheck($request)){
+        if(!TokenValidation::notEmptyCheck($request)){
                  return response()->json(['is_sucess' => false, 'error' => $this->data_not_supplied], 400);
               }
              $request_data = EncryptDecrypt::decrypt($request->data);
-             $mobile_no=$request_data['mobile_no'];
-             $scheme_id=$request_data['scheme_id'];
-             $otp=$request_data['otp'];
+             $mobile_no=$request_data['extraData']['mobile_no'];
+             $scheme_id=$request_data['extraData']['scheme_id'];
+             $otp=$request_data['formData']['otp'];
+             //dd($request_data);
              $token_valid=TokenValidation::checkTokenMobileScheme($request_data,$request);
             // dd($token_valid);
              if(!$token_valid){
@@ -118,10 +126,10 @@ __('messages.govtwb').";
                 $insert = $this->sendsmsService->OtpValidationLogInsert($mobile_no,$decrpt_sub,$request);
 if( $insert){
                $payload = JWTFactory::sub(base64_encode(EncryptDecrypt::encrypt($insert)))
-                ->mobile_no($mobile_no)
-                ->scheme_id($scheme_id)
+                ->mobile_no(base64_encode(EncryptDecrypt::encrypt($mobile_no)))
+                ->scheme_id(base64_encode(EncryptDecrypt::encrypt($scheme_id)))
                 ->otpValidatetimeexp(Carbon::now()->addMinutes((int) config('jwt.ttl'))->format('Y-m-d H:i:s'))
-                ->otpValidate(1)
+                ->otpValidate(base64_encode(EncryptDecrypt::encrypt('annapurna-2026')))
                 ->make();
 
                // $token = JWTAuth::encode($payload);
@@ -181,27 +189,25 @@ else{
     public function sample_encrypt(){
 
     $dataToEncrypt = [
-                  'mobile_no' => '8583035693',
-                  'scheme_id' => 20,
-                  
-              ];
-             $array = json_decode(json_encode($dataToEncrypt), true);
-             $encryptedJson = EncryptDecrypt::encrypt($array);
-            dump('mobileScheme--'.$encryptedJson);
+    "formData" => ["mobile_no" => 8583035693],
+    "extraData"   => ["scheme_id" => 20]
+];
 
-            $dataToEncrypt = [
-                  'mobile_no' => '8583035693',
-                  'scheme_id' => 20,
-                  'otp' => 853154,
-                  
-              ];
+   
              $array = json_decode(json_encode($dataToEncrypt), true);
              $encryptedJson = EncryptDecrypt::encrypt($array);
-            dump('mobileSchemeOtp--'.$encryptedJson);
+            dump('mobile--'.$encryptedJson);
+
+              $dataToEncrypt = [
+            "formData" => ["otp" => 853154],
+            "extraData"   => ["scheme_id" => 20,"mobile_no" => 8583035693]
+             ];
+             $array = json_decode(json_encode($dataToEncrypt), true);
+             $encryptedJson = EncryptDecrypt::encrypt($array);
+            dump('checkotp--'.$encryptedJson);
 
          $dataToEncrypt = [
-                  'mobile_no' => '8583035693',
-                  'scheme_id' => 20,
+                   "formData" => [
                   'beneficiary_name' => 'Gopinath Sau',
                   'gender' => 52,
                   'dob' => '1985-09-07',
@@ -213,69 +219,120 @@ else{
                   'mother_last_name' => 'Sau',
                   'caste_category' => 173,
                   'aadhar_no' => '769585340046',
-                  'ben_mobile_no' => '8583035693',
+                  'ben_mobile_no' => '8583035693'
+                  ],
+                "extraData"   => [
+                    "scheme_id" => 20,
+                    "mobile_no" => 8583035693
+                    ]
                   
               ];
              $array = json_decode(json_encode($dataToEncrypt), true);
              $encryptedJson = EncryptDecrypt::encrypt($array);
             dump('personal--'.$encryptedJson);
-
-            $dataToEncrypt = [
-                  'mobile_no' => '8583035693',
-                  'scheme_id' => 20,
+  $dataToEncrypt = [
+                   "formData" => [
                   'district' => 318,
                   'urban_code' => 2,
                   'police_station' => 'Daspur',
                   'block_muncipality' => 2979,
                   'gp_ward' => 110282,
                   'village_town_city' => 'Joyramchak',
+                  'house_premise_no' => '',
                   'post_office' => 'Panchgechia',
                   'pin_code' => '721148',
-                  'application_id' => '1sdrttttt',
+                  'application_id' => '1bbec0f6-975b-4814-8c4f-a6865d40df0c',
+                  'add_edit_status' => 0,
+                  ],
+                "extraData"   => [
+                    "scheme_id" => 20,
+                    "mobile_no" => 8583035693
+                    ]
                   
               ];
+           
              $array = json_decode(json_encode($dataToEncrypt), true);
              $encryptedJson = EncryptDecrypt::encrypt($array);
             dump('contact--'.$encryptedJson);
-            $dataToEncrypt = [
-                  'mobile_no' => '8583035693',
-                  'scheme_id' => 20,
-                  'ifsc' => 318,
-                  'bank_account_no' => 318,
-                  'confirm_bank_account_no' => 318,
-                  'application_id' => '1sdrttttt',
-                  
+           $dataToEncrypt = [
+                   "formData" => [
+                  'bank_ifsc_code' => 'PUNB0078820',
+                  'bank_account_number' => 159753,
+                  'confirm_bank_account_number' => 159753,
+                  'application_id' => 'a6dfea5a-e036-4461-997f-9af75fe905d8',
+                  ],
+                "extraData"   => [
+                    "scheme_id" => 20,
+                    "mobile_no" => 8583035693
+                    ]
                   
               ];
              $array = json_decode(json_encode($dataToEncrypt), true);
              $encryptedJson = EncryptDecrypt::encrypt($array);
             dump('bank--'.$encryptedJson);
             $dataToEncrypt = [
-                  'mobile_no' => '8583035693',
-                  'scheme_id' => 20,
-                  'doc_is_resident' => 1,
+                   "formData" => [
                   'doc_is_resident' => 1,
                   'earn_monthly_remuneration' => 1,
-                  'application_id' => '1sdrttttt',
-                  
+                  'info_genuine_decl' => 1,
+                  'application_id' => 'a6dfea5a-e036-4461-997f-9af75fe905d8',
+                  ],
+                "extraData"   => [
+                    "scheme_id" => 20,
+                    "mobile_no" => 8583035693
+                    ]
                   
               ];
              $array = json_decode(json_encode($dataToEncrypt), true);
              $encryptedJson = EncryptDecrypt::encrypt($array);
             dump('declaration--'.$encryptedJson);
 
+            $dataToEncrypt = [
+                   "formData" => [
+                  'document_type' => 111,
+                  'application_id' => 'a6dfea5a-e036-4461-997f-9af75fe905d8',
+                  ],
+                "extraData"   => [
+                    "scheme_id" => 20,
+                    "mobile_no" => 8583035693
+                    ]
+                  
+              ];
+             $array = json_decode(json_encode($dataToEncrypt), true);
+             $encryptedJson = EncryptDecrypt::encrypt($array);
+            dump('encloser--'.$encryptedJson);
+
+             $dataToEncrypt = [
+                   "formData" => [
+                  'beneficiary_name' => 'Gopinath Sau3',
+                  'gender' => 52,
+                  'dob' => '1985-09-07',
+                  'father_first_name' => 'Dilip',
+                  'father_middle_name' => 'Kumar',
+                  'father_last_name' => 'Sau',
+                  'mother_first_name' => 'Chaya',
+                  'mother_middle_name' => 'Rani',
+                  'mother_last_name' => 'Sau',
+                  'caste_category' => 173,
+                  'aadhar_no' => '769585340046',
+                  'ben_mobile_no' => '8583035693',
+                  'application_id' => '1bbec0f6-975b-4814-8c4f-a6865d40df0c',
+                  'add_edit_status' => 1,
+                  ],
+                "extraData"   => [
+                    "scheme_id" => 20,
+                    "mobile_no" => 8583035693
+                    ]
+                  
+              ];
+             $array = json_decode(json_encode($dataToEncrypt), true);
+             $encryptedJson = EncryptDecrypt::encrypt($array);
+            dump('personal Edit--'.$encryptedJson);
+
+
 }
 
-    private function notEmptyCheck(Request $request)
-    {
-
-          
-            if(is_null($request->data) || trim($request->data)==''){
-              //dd('ok');
-               return false;
-              }
-               return true;
-    }
+    
     private function mobileNoValidation($mobile_no)
     {
 

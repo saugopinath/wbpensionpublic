@@ -3,6 +3,11 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Str;
+use App\Helpers\EncryptDecrypt;
+use Illuminate\Http\Request;
+
+use Config;
 
 class StoreContactRequest extends FormRequest
 {
@@ -20,23 +25,23 @@ class StoreContactRequest extends FormRequest
                  $request_data = EncryptDecrypt::decrypt($this->data);
                 // dd($request_data);
                  $this->merge([
-                    'mobile_no' => $request_data['mobile_no'],
-                    'scheme_id' => $request_data['scheme_id'],
-                    'application_id' => $request_data['scheme_id'],
-                    'urban_code' => $request_data['urban_code'],
-                    'police_station' => $request_data['police_station'],
-                    'block_muncipality' => $request_data['block_muncipality'],
-                    'gp_ward' => $request_data['gp_ward'],
-                    'village_town_city' => $request_data['village_town_city'],
-                    'house_premise_no' => $request_data['house_premise_no'],
-                    'post_office' => $request_data['post_office'],
-                    'pin_code' => $request_data['pin_code'],
+                    'application_id' => $request_data['formData']['application_id'],
+                    'district' => $request_data['formData']['district'],
+                    'urban_code' => $request_data['formData']['urban_code'],
+                    'police_station' => $request_data['formData']['police_station'],
+                    'block_muncipality' => $request_data['formData']['block_muncipality'],
+                    'gp_ward' => $request_data['formData']['gp_ward'],
+                    'village_town_city' => $request_data['formData']['village_town_city'],
+                    'house_premise_no' => $request_data['formData']['house_premise_no']?$request_data['formData']['house_premise_no']:'',
+                    'post_office' => $request_data['formData']['post_office'],
+                    'pin_code' => $request_data['formData']['pin_code'],
                     
                 ]);
                 
-
+             // dd($this->application_id);
                 
             } catch (\Exception $e) {
+                dd($e);
                 // If the data cannot be decrypted, it fails validation naturally
                 // or you can handle it by doing nothing, leaving it invalid.
             }
@@ -47,21 +52,8 @@ class StoreContactRequest extends FormRequest
     {
         return [
             'data.required' =>  __('validation.required'),
-            'beneficiary_name.required' =>  __('validation.required'),
-            'beneficiary_name.required_with' =>  __('validation.required'),
-            'dob.required' =>  __('validation.required'),
-            'dob.required_with' =>  __('validation.required'),
-            'father_first_name.required' =>  __('validation.required'),
-            'father_first_name.required_with' =>  __('validation.required'),
-            'mother_first_name.required' =>  __('validation.required'),
-            'mother_first_name.required_with' =>  __('validation.required'),
-            'caste_category.required' =>  __('validation.required'),
-            'caste_category.required_with' =>  __('validation.required'),
-           
-            'aadhar_no.required' =>  __('validation.required'),
-            'aadhar_no.required_with' =>  __('validation.required'),
-            'ben_mobile_no.required' =>  __('validation.required'),
-            'ben_mobile_no.required_with' =>  __('validation.required'),
+            'district.required' =>  __('validation.required'),
+            
            
             
            
@@ -71,8 +63,6 @@ class StoreContactRequest extends FormRequest
     {
         return [
             'data' => 'Payload',
-            'mobile_no' => 'Payload Mobile Number',
-            'scheme_id' => 'Scheme Code',
             'application_id' => 'Application Id',
             'district' => 'District',
             'urban_code' => 'Rural/ Urban',
@@ -98,8 +88,6 @@ class StoreContactRequest extends FormRequest
         
         return [
             'data' => 'required',
-            'mobile_no' => 'required_with:data|digits:10',
-            'scheme_id' => 'required_with:data|integer',
             'application_id' => 'required_with:data',
             'district' => 'required',
             'urban_code' => 'required',

@@ -24,31 +24,31 @@ class StorePersonalRequest extends FormRequest
         if ($this->has('data') && !empty($this->data)) {
             try {
                  $request_data = EncryptDecrypt::decrypt($this->data);
-                // dd($request_data);
+                 //dump($request_data);
                  $this->merge([
-                    'mobile_no' => $request_data['mobile_no'],
-                    'scheme_id' => $request_data['scheme_id'],
-                    'beneficiary_name' => $request_data['beneficiary_name'],
-                    'gender' => $request_data['gender'],
-                    'dob' => $request_data['dob'],
-                    'father_first_name' => $request_data['father_first_name'],
-                    'father_middle_name' => $request_data['father_middle_name'],
-                    'father_last_name' => $request_data['father_last_name'],
-                    'mother_first_name' => $request_data['mother_first_name'],
-                    'mother_middle_name' => $request_data['mother_middle_name'],
-                    'mother_last_name' => $request_data['mother_last_name'],
-                    'caste_category' => $request_data['caste_category'],
-                    'aadhar_no' => $request_data['aadhar_no'],
-                    'ben_mobile_no' => $request_data['ben_mobile_no'],
+                    
+                    'beneficiary_name' => $request_data['formData']['beneficiary_name'],
+                    'gender' =>  $request_data['formData']['gender'],
+                    'dob' =>  $request_data['formData']['dob'],
+                    'father_first_name' =>  $request_data['formData']['father_first_name'],
+                    'father_middle_name' =>  $request_data['formData']['father_middle_name'],
+                    'father_last_name' =>  $request_data['formData']['father_last_name'],
+                    'mother_first_name' =>  $request_data['formData']['mother_first_name'],
+                    'mother_middle_name' =>  $request_data['formData']['mother_middle_name'],
+                    'mother_last_name' =>  $request_data['formData']['mother_last_name'],
+                    'caste_category' =>  $request_data['formData']['caste_category'],
+                    'aadhar_no' =>  $request_data['formData']['aadhar_no'],
+                    'ben_mobile_no' =>  $request_data['formData']['ben_mobile_no'],
                 ]);
-                if( $request_data['caste_category']==171 || $request_data['caste_category']==172){
+                if( $request_data['formData']['caste_category']==171 || $request_data['formData']['caste_category']==172){
                     $this->merge([
-                    'caste_certificate_no' => $request_data['caste_certificate_no'],
+                    'caste_certificate_no' => $request_data['formData']['caste_certificate_no'],
                     
                 ]);
 
                 }
             } catch (\Exception $e) {
+                dd($e);
                 // If the data cannot be decrypted, it fails validation naturally
                 // or you can handle it by doing nothing, leaving it invalid.
             }
@@ -83,8 +83,6 @@ class StorePersonalRequest extends FormRequest
     {
         return [
             'data' => 'Payload',
-            'mobile_no' => 'Payload Mobile Number',
-            'scheme_id' => 'Scheme Code',
             'beneficiary_name' => 'Applicant Name',
             'dob' => 'Date of Birth',
             'father_first_name' => 'Father First Name',
@@ -128,10 +126,7 @@ class StorePersonalRequest extends FormRequest
         $marital_status_key =  array_keys(Config::get('constants.marital_status'));
         return [
             'data' => 'required',
-            'mobile_no' => 'required_with:data|digits:10',
-            'scheme_id' => 'required_with:data|integer',
             'beneficiary_name' => 'required_with:data',
-            'beneficiary_name' => 'required_with:data|string|max:200|regex:/^[A-Za-z\s]+$/',
             'dob' => 'required_with:data|date|before_or_equal:' . $max_dob . '|after_or_equal:' . $min_dob,
             'father_first_name' => 'required_with:data|string|max:200|regex:/^[A-Za-z\s]+$/',
             'mother_first_name' => 'required_with:data|string|max:200|regex:/^[A-Za-z\s]+$/',

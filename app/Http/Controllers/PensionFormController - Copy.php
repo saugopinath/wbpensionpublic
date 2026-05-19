@@ -56,7 +56,6 @@ class PensionFormController extends Controller
         $request_data = EncryptDecrypt::decrypt($request->data);
         $mobile_no=$request_data['extraData']['mobile_no'];
         $scheme_id=$request_data['extraData']['scheme_id'];
-        $add_edit_status=$request_data['formData']['add_edit_status'];
              
              if(!TokenValidation::mobileNoValidation($mobile_no)){
                  $errorMsg =  __('messages.mobilenoinvalid');
@@ -82,8 +81,8 @@ class PensionFormController extends Controller
         $token= request()->bearerToken();
         $claims = JWTAuth::getJWTProvider()->decode(base64_decode($token));
         $decrpt_sub=EncryptDecrypt::decrypt(base64_decode($claims['sub']));
-         if($add_edit_status==1){
-             $application_id=$request_data['formData']['application_id'];
+         if($request->add_edit_status==1){
+             $application_id=$request_data['extraData']['application_id'];
             if (empty($application_id)) {
               $errorMsg = __('messages.invaliddata');
              return response()->json(["is_success" => false,'error' => $errorMsg]);
@@ -109,7 +108,7 @@ class PensionFormController extends Controller
             $is_saved = 0;
             try {
                 
-                if($add_edit_status==1){
+                if($request->add_edit_status==1){
                 $is_saved_unqie = 1;
                 }
                 else{
@@ -219,8 +218,7 @@ class PensionFormController extends Controller
          $mobile_no=$request_data['extraData']['mobile_no'];
          $scheme_id=$request_data['extraData']['scheme_id'];
          $application_id=$request_data['formData']['application_id'];
-         $add_edit_status=$request_data['formData']['add_edit_status'];
-
+             
              if(!TokenValidation::mobileNoValidation($mobile_no)){
                  $errorMsg =  __('messages.mobilenoinvalid');
                 return response()->json(["is_success" => false,'error' => $errorMsg]);
@@ -284,7 +282,7 @@ class PensionFormController extends Controller
                     return response()->json(["is_success" => false, 'error' => $return_text]);
             }
            
-             if($add_edit_status==1){
+             if($request->add_edit_status==1){
                 $pension_details_contact=BeneficiaryContact::where('scheme_id',$scheme_id)->where('application_id',$application_id)->first();
 
              }
@@ -363,41 +361,42 @@ class PensionFormController extends Controller
                 return response()->json(["is_success" => false,'error' => $errorMsg]);
             }
     }
-     public function bankEntry(StoreBankRequest $request)
+    public function bankEntry(StoreBankRequest $request)
     {
-        try{
-         $validated = $request->validated();
-         //dd($validated);
-         $request_data = EncryptDecrypt::decrypt($request->data);
-         $mobile_no=$request_data['extraData']['mobile_no'];
-         $scheme_id=$request_data['extraData']['scheme_id'];
-         $application_id=$request_data['formData']['application_id'];
-         $add_edit_status=$request_data['formData']['add_edit_status'];
-             if(!TokenValidation::mobileNoValidation($mobile_no)){
-                 $errorMsg =  __('messages.mobilenoinvalid');
-                return response()->json(["is_success" => false,'error' => $errorMsg]);
-             }
-             $scheme_id=$request_data['extraData']['scheme_id'];
-             //dd($this->schemeValidation($scheme_id));
-             if(!TokenValidation::schemeValidation($scheme_id)){
-                 $errorMsg =  __('messages.mobilenoinvalid');
-                return response()->json(["is_success" => false,'error' => $errorMsg]);
-             }
-        $token_valid=TokenValidation::checkTokenMobileScheme($request_data,$request);
-         if(!$token_valid){
-                 $errorMsg =  __('messages.invalidToken');
-                return response()->json(["is_success" => false,'error' => $errorMsg]);
-             }
-             $token_expire=TokenValidation::checTokenExpireTime($request_data,$request);
-            // dd($token_expire);
-             if(!$token_expire){
-                 $errorMsg =  __('messages.invalidOtp');
-                return response()->json(["is_success" => false,'error' => $errorMsg]);
-             }
-             $district_list=District::all(); 
+   try{
+        $scheme_id=EncryptDecrypt::decrypt(base64_decode($request->scheme_id));
         $token= request()->bearerToken();
         $claims = JWTAuth::getJWTProvider()->decode(base64_decode($token));
         $decrpt_sub=EncryptDecrypt::decrypt(base64_decode($claims['sub']));
+        $application_id=EncryptDecrypt::decrypt(base64_decode($request->application_id));
+
+
+        if (empty($scheme_id) || !is_int($scheme_id)) {
+          $errorMsg = __('messages.invaliddata');
+           return response()->json(["is_success" => false,'error' => $errorMsg]);
+        }
+        if (empty($decrpt_sub) || !is_int($decrpt_sub)) {
+          $errorMsg = __('messages.invaliddata');
+           return response()->json(["is_success" => false,'error' => $errorMsg]);
+        }
+        if (empty($application_id)) {
+              $errorMsg = __('messages.invaliddata');
+             return response()->json(["is_success" => false,'error' => $errorMsg]);
+        }
+        $rules = [
+            'bank_ifsc_code' => 'required',
+            'bank_account_number' => 'required|numeric|required_with:confirm_bank_account_number|same:confirm_bank_account_number',
+            'confirm_bank_account_number' => 'required|numeric',
+
+        ];
+        $attributes = array();
+        $messages = array();
+        $attributes['bank_ifsc_code'] = 'IFS Code';
+        $attributes['bank_account_number'] = 'Bank Account Number';
+
+        $validator = Validator::make($request->all(), $rules, $messages, $attributes);
+        if ($validator->passes()) {
+            $application_id=EncryptDecrypt::decrypt(base64_decode($request->application_id));
             $ifsc = trim($request->bank_ifsc_code);
 
             $row_count1 = Ifsccodemaster::where('is_active', 1)->where('code', $ifsc)->count();
@@ -408,7 +407,7 @@ class PensionFormController extends Controller
             }
            
 
-           if($add_edit_status==1){
+           if($request->add_edit_status==1){
                                     $pension_details_bank=BeneficiaryBank::where('scheme_id',$scheme_id)->where('application_id',$application_id)->first();
 
            }
@@ -452,50 +451,56 @@ class PensionFormController extends Controller
                 return response()->json(["is_success" => false,'error' => $errorMsg]);
             }
             
-       
+        } else {
+             $return_msg = $validator->errors()->all();
+            return response()->json(["is_success" => false,'errors' => $return_msg]);
+        }
           }
         catch (\Exception $e) {
-               dd($e);
                 $errorMsg = __('messages.invaliddata');
                 return response()->json(["is_success" => false,'error' => $errorMsg]);
             }
     }
-     public function declarationEntry(StoreDeclarationRequest $request)
+    public function declarationEntry(StoreDeclarationRequest $request)
     {
         try{
-         $validated = $request->validated();
-         //dd($validated);
-         $request_data = EncryptDecrypt::decrypt($request->data);
-         $mobile_no=$request_data['extraData']['mobile_no'];
-         $scheme_id=$request_data['extraData']['scheme_id'];
-         $application_id=$request_data['formData']['application_id'];
-         $add_edit_status=$request_data['formData']['add_edit_status'];
-
-             if(!TokenValidation::mobileNoValidation($mobile_no)){
-                 $errorMsg =  __('messages.mobilenoinvalid');
-                return response()->json(["is_success" => false,'error' => $errorMsg]);
-             }
-             $scheme_id=$request_data['extraData']['scheme_id'];
-             //dd($this->schemeValidation($scheme_id));
-             if(!TokenValidation::schemeValidation($scheme_id)){
-                 $errorMsg =  __('messages.mobilenoinvalid');
-                return response()->json(["is_success" => false,'error' => $errorMsg]);
-             }
-        $token_valid=TokenValidation::checkTokenMobileScheme($request_data,$request);
-         if(!$token_valid){
-                 $errorMsg =  __('messages.invalidToken');
-                return response()->json(["is_success" => false,'error' => $errorMsg]);
-             }
-             $token_expire=TokenValidation::checTokenExpireTime($request_data,$request);
-            // dd($token_expire);
-             if(!$token_expire){
-                 $errorMsg =  __('messages.invalidOtp');
-                return response()->json(["is_success" => false,'error' => $errorMsg]);
-             }
+       $scheme_id=EncryptDecrypt::decrypt(base64_decode($request->scheme_id));
         $token= request()->bearerToken();
         $claims = JWTAuth::getJWTProvider()->decode(base64_decode($token));
         $decrpt_sub=EncryptDecrypt::decrypt(base64_decode($claims['sub']));
-              if($add_edit_status==1){
+        $application_id=EncryptDecrypt::decrypt(base64_decode($request->application_id));
+
+
+        if (empty($scheme_id) || !is_int($scheme_id)) {
+          $errorMsg = __('messages.invaliddata');
+           return response()->json(["is_success" => false,'error' => $errorMsg]);
+        }
+        if (empty($decrpt_sub) || !is_int($decrpt_sub)) {
+          $errorMsg = __('messages.invaliddata');
+           return response()->json(["is_success" => false,'error' => $errorMsg]);
+        }
+        if (empty($application_id)) {
+              $errorMsg = __('messages.invaliddata');
+             return response()->json(["is_success" => false,'error' => $errorMsg]);
+        }
+        $rules = [
+            'is_resident' => 'required|in:1',
+            'earn_monthly_remuneration' => 'required|in:1',
+            'info_genuine_decl' => 'required|in:1'
+        ];
+        $attributes = array();
+        $messages = array();
+        $attributes['doc_is_resident.required'] = "Please check the checkbox That I am a resident of West Bengal";
+        $attributes['doc_is_resident.in'] = "Please check the checkbox That I am a resident of West Bengal";
+        $attributes['earn_monthly_remuneration.required'] = "Please check the checkbox That I do not earn any monthly remuneration from any regular Government job";
+        $attributes['earn_monthly_remuneration.in'] = "Please check the checkbox That I do not earn any monthly remuneration from any regular Government job";
+        $attributes['info_genuine_decl.required'] = "Please check the checkbox That all the information and documents submitted by me are correct/ genuine. In case any of the information/ document is found to be false, penal action shall be taken against me and the benefit will be terminated. ";
+        $attributes['info_genuine_decl.in'] = "Please check the checkbox That all the information and documents submitted by me are correct/ genuine. In case any of the information/ document is found to be false, penal action shall be taken against me and the benefit will be terminated. ";
+        $validator = Validator::make($request->all(), $rules, $messages, $attributes);
+        if ($validator->passes()) {
+           
+          
+             if($request->add_edit_status==1){
                 $pension_details_declaration=BeneficiarySelfDeclaration::where('scheme_id',$scheme_id)->where('application_id',$application_id)->first();
 
              }
@@ -549,49 +554,33 @@ class PensionFormController extends Controller
                 $errorMsg = __('messages.dbroolback');
                 return response()->json(["is_success" => false,'error' => $errorMsg]);
             }
-            
-       
-          }
+                
+        } else {
+            $return_msg = $validator->errors()->all();
+            return response()->json(["is_success" => false,'errors' => $return_msg]);
+        }
+    }
         catch (\Exception $e) {
-               dd($e);
                 $errorMsg = __('messages.invaliddata');
                 return response()->json(["is_success" => false,'error' => $errorMsg]);
             }
     }
-   
-     public function encloserEntry(Request $request)
+     public function encloserEntry(StoreEncloserRequest $request)
     {
         //dd(base64_encode(EncryptDecrypt::encrypt(111)));
 
          try {
-        $request_data = EncryptDecrypt::decrypt($request->data);
-        //dd($request_data);
-        $application_id=$request_data['formData']['application_id'];
-        $document_type=$request_data['formData']['document_type'];
-        $scheme_id=$request_data['extraData']['scheme_id'];
-        $mobile_no=$request_data['extraData']['mobile_no'];
-        $add_edit_status=$request_data['formData']['add_edit_status'];
-
-         if(!TokenValidation::schemeValidation($scheme_id)){
-                 $errorMsg =  __('messages.mobilenoinvalid');
-                return response()->json(["is_success" => false,'error' => $errorMsg]);
-             }
-        $token_valid=TokenValidation::checkTokenMobileScheme($request_data,$request);
-         if(!$token_valid){
-                 $errorMsg =  __('messages.invalidToken');
-                return response()->json(["is_success" => false,'error' => $errorMsg]);
-             }
-             $token_expire=TokenValidation::checTokenExpireTime($request_data,$request);
-            // dd($token_expire);
-             if(!$token_expire){
-                 $errorMsg =  __('messages.invalidOtp');
-                return response()->json(["is_success" => false,'error' => $errorMsg]);
-        }
+        $scheme_id=EncryptDecrypt::decrypt(base64_decode($request->scheme_id));
         $token= request()->bearerToken();
         $claims = JWTAuth::getJWTProvider()->decode(base64_decode($token));
         $decrpt_sub=EncryptDecrypt::decrypt(base64_decode($claims['sub']));
+        $application_id=EncryptDecrypt::decrypt(base64_decode($request->application_id));
+        $document_type=EncryptDecrypt::decrypt(base64_decode($request->document_type));
         //dd($document_type);
-        
+        if (empty($scheme_id) || !is_int($scheme_id)) {
+          $errorMsg = __('messages.invaliddata');
+           return response()->json(["is_success" => false,'error' => $errorMsg]);
+        }
         if (empty($decrpt_sub) || !is_int($decrpt_sub)) {
           $errorMsg = __('messages.invaliddata');
            return response()->json(["is_success" => false,'error' => $errorMsg]);
@@ -602,9 +591,12 @@ class PensionFormController extends Controller
         }
        
         
-         //dd($request->file('file'));
+
         // dd( $document_type);
-        
+        if (empty($scheme_id) || !is_int($scheme_id)) {
+          $errorMsg = __('messages.invaliddata');
+         return response()->json(["is_success" => false,'error' => $errorMsg]);
+        }
         //dd( $document_type);
         $query = SchemeAttachedDocMappings::with('docType')->where('doc_type_id', $document_type)->where('scheme_id', $scheme_id);
         $doc_arr = $query->first();
@@ -621,7 +613,7 @@ class PensionFormController extends Controller
         //dump(explode(',',$doc_arr->mime_type));
         //dd('ok');
         $required = 'required';
-        $rules['file'] = $required . '|max:' . $doc_arr->max_file_size;
+        $rules['file'] = $required . '|mimes:' .$doc_arr->mime_type. '|max:' . $doc_arr->docType->max_file_size . ',';
         $messages['file.max'] = "The file uploaded for " . $doc_arr->docType->name . " size must be less than :max KB";
         $messages['file.mimes'] = "The file uploaded for " . $doc_arr->docType->name . " must be of type " . $doc_arr->extension_type;
         $messages['file.required'] = "Document for " . $doc_arr->docType->name . " must be uploaded";
@@ -630,22 +622,23 @@ class PensionFormController extends Controller
         if ($validator->passes()) {
             $valid = 1;
         } else {
-            //dd('file3',$validator->errors()->all());
+            dd('file3',$validator->errors()->all());
             $return_msg = $validator->errors()->all();
             return response()->json(["is_success" => false,'errors' => $return_msg]);
         }
 
 
         if ($valid == 1) {
-             if($add_edit_status==1){
-                $pension_details_enc=BeneficiaryEnclosure::where('scheme_id',$scheme_id)->where('application_id',$application_id)->where('document_type',$document_type)->first();
+             $scheme_id=EncryptDecrypt::decrypt(base64_decode($request->scheme_id));
+             $application_id=EncryptDecrypt::decrypt(base64_decode($request->application_id));
+             if($request->add_edit_status==1){
+                $pension_details_enc=BeneficiaryEnclosure::where('scheme_id',$scheme_id)->where('application_id',$application_id)->first();
 
              }
              else{
                   $pension_details_enc=new BeneficiaryEnclosure();
                   $pension_details_enc->application_id = $application_id;
                   $pension_details_enc->scheme_id = $scheme_id;
-                   $pension_details_enc->document_type = $doc_arr->id;
              }
              DB::beginTransaction();
              DB::connection('pgsql_encwrite')->beginTransaction();
@@ -659,6 +652,7 @@ class PensionFormController extends Controller
                   $mime_type = $image_file->getMimeType();
                     //$type = pathinfo($image_file, PATHINFO_EXTENSION);
                   $base64 = base64_encode($img_data);
+                  $pension_details_enc->document_type = $doc_arr->id;
                   $pension_details_enc->attched_document = $base64;
                   $pension_details_enc->document_extension = $extension;
                   $pension_details_enc->document_mime_type = $mime_type;
