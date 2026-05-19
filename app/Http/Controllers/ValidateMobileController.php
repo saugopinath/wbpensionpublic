@@ -219,7 +219,8 @@ else{
                   'mother_last_name' => 'Sau',
                   'caste_category' => 173,
                   'aadhar_no' => '769585340046',
-                  'ben_mobile_no' => '8583035693'
+                  'ben_mobile_no' => '8583035693',
+                  'add_edit_status' => 0
                   ],
                 "extraData"   => [
                     "scheme_id" => 20,
@@ -229,7 +230,33 @@ else{
               ];
              $array = json_decode(json_encode($dataToEncrypt), true);
              $encryptedJson = EncryptDecrypt::encrypt($array);
-            dump('personal--'.$encryptedJson);
+            dump('personal Add--'.$encryptedJson);
+             $dataToEncrypt = [
+                   "formData" => [
+                  'beneficiary_name' => 'Gopinath Sau Edit',
+                  'gender' => 52,
+                  'dob' => '1985-09-07',
+                  'father_first_name' => 'Dilip',
+                  'father_middle_name' => 'Kumar',
+                  'father_last_name' => 'Sau',
+                  'mother_first_name' => 'Chaya',
+                  'mother_middle_name' => 'Rani',
+                  'mother_last_name' => 'Sau',
+                  'caste_category' => 173,
+                  'aadhar_no' => '769585340046',
+                  'ben_mobile_no' => '8583035693',
+                   'application_id' => '1bbec0f6-975b-4814-8c4f-a6865d40df0c',
+                  'add_edit_status' => 1
+                  ],
+                "extraData"   => [
+                    "scheme_id" => 20,
+                    "mobile_no" => 8583035693
+                    ]
+                  
+              ];
+             $array = json_decode(json_encode($dataToEncrypt), true);
+             $encryptedJson = EncryptDecrypt::encrypt($array);
+            dump('personal edit--'.$encryptedJson);
   $dataToEncrypt = [
                    "formData" => [
                   'district' => 318,
@@ -253,13 +280,38 @@ else{
            
              $array = json_decode(json_encode($dataToEncrypt), true);
              $encryptedJson = EncryptDecrypt::encrypt($array);
-            dump('contact--'.$encryptedJson);
+            dump('contact add--'.$encryptedJson);
+            $dataToEncrypt = [
+                   "formData" => [
+                  'district' => 318,
+                  'urban_code' => 2,
+                  'police_station' => 'Daspur1',
+                  'block_muncipality' => 2979,
+                  'gp_ward' => 110282,
+                  'village_town_city' => 'Joyramchak',
+                  'house_premise_no' => '',
+                  'post_office' => 'Panchgechia',
+                  'pin_code' => '721148',
+                  'application_id' => '1bbec0f6-975b-4814-8c4f-a6865d40df0c',
+                  'add_edit_status' => 1,
+                  ],
+                "extraData"   => [
+                    "scheme_id" => 20,
+                    "mobile_no" => 8583035693
+                    ]
+                  
+              ];
+           
+             $array = json_decode(json_encode($dataToEncrypt), true);
+             $encryptedJson = EncryptDecrypt::encrypt($array);
+            dump('contact edit--'.$encryptedJson);
            $dataToEncrypt = [
                    "formData" => [
                   'bank_ifsc_code' => 'PUNB0078820',
                   'bank_account_number' => 159753,
                   'confirm_bank_account_number' => 159753,
                   'application_id' => 'a6dfea5a-e036-4461-997f-9af75fe905d8',
+                  'add_edit_status' => 0,
                   ],
                 "extraData"   => [
                     "scheme_id" => 20,
@@ -269,13 +321,32 @@ else{
               ];
              $array = json_decode(json_encode($dataToEncrypt), true);
              $encryptedJson = EncryptDecrypt::encrypt($array);
-            dump('bank--'.$encryptedJson);
+            dump('bank add--'.$encryptedJson);
+
+             $dataToEncrypt = [
+                   "formData" => [
+                  'bank_ifsc_code' => 'PUNB0078820',
+                  'bank_account_number' => 159753,
+                  'confirm_bank_account_number' => 159753,
+                  'application_id' => 'a6dfea5a-e036-4461-997f-9af75fe905d8',
+                  'add_edit_status' => 1,
+                  ],
+                "extraData"   => [
+                    "scheme_id" => 20,
+                    "mobile_no" => 8583035693
+                    ]
+                  
+              ];
+             $array = json_decode(json_encode($dataToEncrypt), true);
+             $encryptedJson = EncryptDecrypt::encrypt($array);
+            dump('bank edit--'.$encryptedJson);
             $dataToEncrypt = [
                    "formData" => [
                   'doc_is_resident' => 1,
                   'earn_monthly_remuneration' => 1,
                   'info_genuine_decl' => 1,
                   'application_id' => 'a6dfea5a-e036-4461-997f-9af75fe905d8',
+                   'add_edit_status' => 0,
                   ],
                 "extraData"   => [
                     "scheme_id" => 20,
@@ -285,7 +356,25 @@ else{
               ];
              $array = json_decode(json_encode($dataToEncrypt), true);
              $encryptedJson = EncryptDecrypt::encrypt($array);
-            dump('declaration--'.$encryptedJson);
+            dump('declaration add--'.$encryptedJson);
+
+             $dataToEncrypt = [
+                   "formData" => [
+                  'doc_is_resident' => 1,
+                  'earn_monthly_remuneration' => 1,
+                  'info_genuine_decl' => 1,
+                  'application_id' => 'a6dfea5a-e036-4461-997f-9af75fe905d8',
+                   'add_edit_status' => 1,
+                  ],
+                "extraData"   => [
+                    "scheme_id" => 20,
+                    "mobile_no" => 8583035693
+                    ]
+                  
+              ];
+             $array = json_decode(json_encode($dataToEncrypt), true);
+             $encryptedJson = EncryptDecrypt::encrypt($array);
+            dump('declaration edit--'.$encryptedJson);
 
             $dataToEncrypt = [
                    "formData" => [
@@ -301,7 +390,23 @@ else{
               ];
              $array = json_decode(json_encode($dataToEncrypt), true);
              $encryptedJson = EncryptDecrypt::encrypt($array);
-            dump('encloser--'.$encryptedJson);
+            dump('encloser add--'.$encryptedJson);
+
+             $dataToEncrypt = [
+                   "formData" => [
+                  'document_type' => 111,
+                  'application_id' => 'a6dfea5a-e036-4461-997f-9af75fe905d8',
+                   'add_edit_status' => 1,
+                  ],
+                "extraData"   => [
+                    "scheme_id" => 20,
+                    "mobile_no" => 8583035693
+                    ]
+                  
+              ];
+             $array = json_decode(json_encode($dataToEncrypt), true);
+             $encryptedJson = EncryptDecrypt::encrypt($array);
+            dump('encloser edit--'.$encryptedJson);
 
              $dataToEncrypt = [
                    "formData" => [
