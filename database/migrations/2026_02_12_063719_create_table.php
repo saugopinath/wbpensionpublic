@@ -178,7 +178,7 @@ return new class extends Migration {
             document_extension VARCHAR(50) NOT NULL,
             document_mime_type VARCHAR(150) NOT NULL,
             document_type SMALLINT NOT NULL,
-            created_by INTEGER NOT NULL,
+            created_by INTEGER,
             tab_code INTEGER NULL,
             is_clean smallint DEFAULT 1,
             created_at TIMESTAMP WITHOUT TIME ZONE,

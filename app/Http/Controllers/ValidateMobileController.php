@@ -291,6 +291,7 @@ else{
                    "formData" => [
                   'document_type' => 111,
                   'application_id' => 'a6dfea5a-e036-4461-997f-9af75fe905d8',
+                   'add_edit_status' => 0,
                   ],
                 "extraData"   => [
                     "scheme_id" => 20,
