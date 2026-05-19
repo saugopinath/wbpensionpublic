@@ -36,6 +36,13 @@ use App\Http\Requests\StoreBankRequest;
 use App\Http\Requests\StoreDeclarationRequest;
 use App\Http\Requests\StoreEncloserRequest;
 use Config;
+use Illuminate\Database\Eloquent\Collection;
+use App\Jobs\PersonaEntryJob;
+use App\Jobs\AadhaarEntryJob;
+use App\Jobs\ContactEntryJob;
+use App\Jobs\BankEntryJob;
+use App\Jobs\DeclarationEntryJob;
+use App\Jobs\EnCloserEntryJob;
 
 
 class PensionFormController extends Controller
@@ -88,18 +95,33 @@ class PensionFormController extends Controller
               $errorMsg = __('messages.invaliddata');
              return response()->json(["is_success" => false,'error' => $errorMsg]);
            }
+           if (config('app.queue_enable')) {
+            $pension_details = new Collection();
+            $pension_details->scheme_id= $scheme_id;
+            $pension_details->application_id= $application_id;
+            $pension_details->add_edit_status= 1;
+           }
+           else{
             $pension_details=BeneficiaryPersonal::where('scheme_id',$scheme_id)->where('application_id',$application_id)->first();
+           }
 
            }
            else{
             $application_id = Str::uuid();
             $beneficiary_id = Str::uuid();
+              if (config('app.queue_enable')) {
+                $pension_details = new Collection();
+                $pension_details->scheme_id= $scheme_id;
+                $pension_details->add_edit_status= 0;
+              }
+              else{
             $pension_details=new BeneficiaryPersonal();
+              }
             $unquie_ben_id_obj=new UniqueAppBenId();
             $unquie_ben_id_obj->scheme_id= $scheme_id;
             $unquie_ben_id_obj->application_id=$application_id;
             $unquie_ben_id_obj->beneficiary_id=$beneficiary_id;
-             $pension_details->application_id=$application_id;
+            $pension_details->application_id=$application_id;
            }
          
             $female_code_obj=Codemaster::where('code',52)->first();
@@ -156,9 +178,19 @@ class PensionFormController extends Controller
                 $pension_details->ip_address= $request->ip();
                 $pension_details->otp_validation_id= $decrpt_sub;
                 $pension_details->is_clean= 2;
+                if (config('app.queue_enable')) {
+                  $is_saved = PersonaEntryJob::dispatch($pension_details);
+               }
+               else{
                 $is_saved = $pension_details->save();
+                }
                 if($is_saved){
-                  $pension_details_aadhar=new BeneficiaryAadhaar();
+                    if (config('app.queue_enable')) {
+                     $pension_details_aadhar = new Collection();
+                    }
+                    else{
+                          $pension_details_aadhar=new BeneficiaryAadhaar();
+                    }
                   $pension_details_aadhar->scheme_id= $scheme_id;
 
                   $pension_details_aadhar->encoded_aadhar = Crypt::encryptString($validated['aadhar_no']);
@@ -166,14 +198,28 @@ class PensionFormController extends Controller
                   $pension_details_aadhar->application_id =   $pension_details->application_id;
                   $pension_details_aadhar->otp_validation_id= $decrpt_sub;
                   $pension_details_aadhar->is_clean= 2;
+                  if (config('app.queue_enable')) {
+                      $is_saved_aadhar = AadhaarEntryJob::dispatch($pension_details_aadhar);
+                  }else{
                   $is_saved_aadhar = $pension_details_aadhar->save();
+                  }
+                  if (config('app.queue_enable')) {
+                    $AcceptRejectInfo = new Collection();
+                  }
+                  else{
                   $AcceptRejectInfo = new AcceptRejectInfo;
+                  }
                   $AcceptRejectInfo->application_id = $pension_details->application_id;
                   $AcceptRejectInfo->ip_address = request()->ip();
                   $AcceptRejectInfo->browser = request()->header('User-Agent');
                   $AcceptRejectInfo->model_name = null;
                   $AcceptRejectInfo->op_type = Codemaster::getIdByCode('21101');
+                  if (config('app.queue_enable')) {
+                    $accpt_reject_save = AcceptrejectInfoEntryJob::dispatch($AcceptRejectInfo);
+                  }
+                  else{
                   $accpt_reject_save = $AcceptRejectInfo->save();
+                  }
                   if($is_saved_aadhar &&  $accpt_reject_save){
                      DB::commit();
                     return response()->json(["is_success" => true,'temp_application_id' => base64_encode(EncryptDecrypt::encrypt($pension_details->application_id))]);
@@ -285,13 +331,28 @@ class PensionFormController extends Controller
             }
            
              if($add_edit_status==1){
+                if (config('app.queue_enable')) {
+                $pension_details_contact = new Collection();
+                $pension_details_contact->scheme_id  = $scheme_id;
+                $pension_details_contact->application_id  = $application_id;
+                $pension_details_contact->add_edit_status  = 1;
+                }else{
                 $pension_details_contact=BeneficiaryContact::where('scheme_id',$scheme_id)->where('application_id',$application_id)->first();
+                }
 
              }
              else{
+                if (config('app.queue_enable')) {
+                     $pension_details_contact = new Collection();
+                     $pension_details_contact->scheme_id  = $scheme_id;
+                     $pension_details_contact->application_id  = $application_id;
+                     $pension_details_contact->add_edit_status  = 0;
+                }
+                else{
                   $pension_details_contact=new BeneficiaryContact();
                   $pension_details_contact->scheme_id  = $scheme_id;
                   $pension_details_contact->is_clean  = 2;
+                }
              }
 
             DB::beginTransaction();
@@ -328,14 +389,29 @@ class PensionFormController extends Controller
                 $pension_details_contact->ip_address  = $request->ip();
                 $pension_details_contact->created_by_dist_code = $validated['district'];
                 $pension_details_contact->created_by_local_body_code = $blockulbCode;
+                if (config('app.queue_enable')) {
+                    $is_saved = ContactEntryJob::dispatch($pension_details_contact);
+                }
+                else{
                 $is_saved = $pension_details_contact->save();
-                   $AcceptRejectInfo = new AcceptRejectInfo;
+                }
+                if (config('app.queue_enable')) {
+                    $AcceptRejectInfo = new Collection();
+                }
+                else{
+                  $AcceptRejectInfo = new AcceptRejectInfo;
+                }
                   $AcceptRejectInfo->application_id = $application_id;
                   $AcceptRejectInfo->ip_address = request()->ip();
                   $AcceptRejectInfo->browser = request()->header('User-Agent');
                   $AcceptRejectInfo->model_name = null;
                   $AcceptRejectInfo->op_type = Codemaster::getIdByCode('21102');
+                  if (config('app.queue_enable')) {
+                    $accpt_reject_save = AcceptrejectInfoEntryJob::dispatch($AcceptRejectInfo);
+                  }
+                  else{
                   $accpt_reject_save = $AcceptRejectInfo->save();
+                  }
                 if($is_saved &&  $accpt_reject_save){
                    
                         DB::commit();
@@ -409,11 +485,22 @@ class PensionFormController extends Controller
            
 
            if($add_edit_status==1){
+            if (config('app.queue_enable')) {
+                 $pension_details_bank = new Collection();
+                 $pension_details_bank->add_edit_sttus  = 1;
+            }else{
                                     $pension_details_bank=BeneficiaryBank::where('scheme_id',$scheme_id)->where('application_id',$application_id)->first();
+            }
 
            }
            else{
+            if (config('app.queue_enable')) {
+                   $pension_details_bank = new Collection();
+                                 $pension_details_bank->add_edit_sttus  = 0;
+
+            }else{
                         $pension_details_bank=new BeneficiaryBank();
+            }
                         $pension_details_bank->scheme_id  = $scheme_id;
                         $pension_details_bank->is_clean  = 2;
 
@@ -433,14 +520,30 @@ class PensionFormController extends Controller
                 $pension_details_bank->bankaccountnumber    = trim($request->bank_account_number);
                 $pension_details_bank->ifscode   = trim($request->bank_ifsc_code);
                 $pension_details_bank->ip_address = $request->ip();
+                if (config('app.queue_enable')) {
+                     $is_saved = BankEntryJob::dispatch($pension_details_bank);
+                }
+                else{
+
                 $is_saved = $pension_details_bank->save();
-                     $AcceptRejectInfo = new AcceptRejectInfo;
+                }
+                    if (config('app.queue_enable')) {
+                    $AcceptRejectInfo = new Collection();
+                  }
+                  else{
+                  $AcceptRejectInfo = new AcceptRejectInfo;
+                  }
                   $AcceptRejectInfo->application_id = $application_id;
                   $AcceptRejectInfo->ip_address = request()->ip();
                   $AcceptRejectInfo->browser = request()->header('User-Agent');
                   $AcceptRejectInfo->model_name = null;
                   $AcceptRejectInfo->op_type = Codemaster::getIdByCode('21103');
+                  if (config('app.queue_enable')) {
+                    $accpt_reject_save = AcceptrejectInfoEntryJob::dispatch($AcceptRejectInfo);
+                  }
+                  else{
                   $accpt_reject_save = $AcceptRejectInfo->save();
+                  }
                  if($is_saved && $accpt_reject_save){
                         DB::commit();
                        return response()->json(["is_success" => true,'temp_application_id' => base64_encode(EncryptDecrypt::encrypt($application_id))]);
@@ -496,16 +599,28 @@ class PensionFormController extends Controller
         $claims = JWTAuth::getJWTProvider()->decode(base64_decode($token));
         $decrpt_sub=EncryptDecrypt::decrypt(base64_decode($claims['sub']));
               if($add_edit_status==1){
+                if (config('app.queue_enable')) {
+                     $pension_details_declaration = new Collection();
+                     $pension_details_declaration->add_edit_status= 1;
+                }
+                else{
                 $pension_details_declaration=BeneficiarySelfDeclaration::where('scheme_id',$scheme_id)->where('application_id',$application_id)->first();
+                }
 
              }
              else{
+                if (config('app.queue_enable')) {
+                  $pension_details_declaration = new Collection();
+                  $pension_details_declaration->add_edit_status= 0;
+
+                }
+                else
                   $pension_details_declaration=new BeneficiarySelfDeclaration();
-                  $pension_details_declaration->scheme_id= $scheme_id;
-                  $pension_details_declaration->is_clean= 2;
-                  $pension_details_declaration->application_id= $application_id;
 
              }
+            $pension_details_declaration->scheme_id= $scheme_id;
+            $pension_details_declaration->is_clean= 2;
+            $pension_details_declaration->application_id= $application_id;
             
 
             DB::beginTransaction();
@@ -524,13 +639,19 @@ class PensionFormController extends Controller
                         'earn_monthly_remuneration' => trim($request->earn_monthly_remuneration),
                         'info_genuine_decl' =>trim($request->info_genuine_decl)
                     ];
-                 $pension_details_declaration_save = $pension_details_declaration->save();
+                    if (config('app.queue_enable')) {
+                         $pension_details_declaration_save = DeclarationEntryJob::dispatch($pension_details_declaration);
+                    }else
+                   $pension_details_declaration_save = $pension_details_declaration->save();
                   $AcceptRejectInfo = new AcceptRejectInfo;
                   $AcceptRejectInfo->application_id = $application_id;
                   $AcceptRejectInfo->ip_address = request()->ip();
                   $AcceptRejectInfo->browser = request()->header('User-Agent');
                   $AcceptRejectInfo->model_name = null;
                   $AcceptRejectInfo->op_type = Codemaster::getIdByCode('21104');
+                   if (config('app.queue_enable')) {
+                     $accpt_reject_save = AcceptrejectInfoEntryJob::dispatch($AcceptRejectInfo);
+                   }else
                   $accpt_reject_save = $AcceptRejectInfo->save();
                   if($pension_details_declaration_save && $accpt_reject_save){
                        DB::commit();
@@ -638,15 +759,25 @@ class PensionFormController extends Controller
 
         if ($valid == 1) {
              if($add_edit_status==1){
+                if (config('app.queue_enable')) {
+                     $pension_details_enc = new Collection();
+                   $pension_details_enc->add_edit_status = 1;
+                }else
                 $pension_details_enc=BeneficiaryEnclosure::where('scheme_id',$scheme_id)->where('application_id',$application_id)->where('document_type',$document_type)->first();
 
              }
              else{
+                 if (config('app.queue_enable')) {
+                     $pension_details_enc = new Collection();
+                     $pension_details_enc->add_edit_status = 0;
+                 }else
                   $pension_details_enc=new BeneficiaryEnclosure();
-                  $pension_details_enc->application_id = $application_id;
-                  $pension_details_enc->scheme_id = $scheme_id;
-                   $pension_details_enc->document_type = $doc_arr->id;
+                  //$pension_details_enc->add_edit_status = 0;
+                  
              }
+             $pension_details_enc->application_id = $application_id;
+            $pension_details_enc->scheme_id = $scheme_id;
+            $pension_details_enc->document_type = $doc_arr->id;
              DB::beginTransaction();
              DB::connection('pgsql_encwrite')->beginTransaction();
             try {
@@ -664,14 +795,28 @@ class PensionFormController extends Controller
                   $pension_details_enc->document_mime_type = $mime_type;
                   $pension_details_enc->ip_address = $request->ip();
                   $pension_details_enc->otp_validation_id= $decrpt_sub;
+                  if (config('app.queue_enable')) {
+                    $is_saved = EnCloserEntryJob::dispatch($pension_details_enc);
+
+                  }else
                   $is_saved = $pension_details_enc->save();
+                  if (config('app.queue_enable')) {
+                    $AcceptRejectInfo = new Collection();
+                  }
+                  else{
                   $AcceptRejectInfo = new AcceptRejectInfo;
+                  } 
                   $AcceptRejectInfo->application_id = $application_id;
                   $AcceptRejectInfo->ip_address = request()->ip();
                   $AcceptRejectInfo->browser = request()->header('User-Agent');
                   $AcceptRejectInfo->model_name = null;
                   $AcceptRejectInfo->op_type = Codemaster::getIdByCode('21105');
-                  $accpt_reject_save = $AcceptRejectInfo->save();
+                  if (config('app.queue_enable')) {
+                    $AcceptRejectInfo = new Collection();
+                  }
+                  else{
+                  $AcceptRejectInfo = new AcceptRejectInfo;
+                  }
                   if($is_saved && $accpt_reject_save){
                      DB::commit();
                      DB::connection('pgsql_encwrite')->commit();

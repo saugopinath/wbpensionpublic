@@ -4,7 +4,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ValidateMobileController;
 use App\Http\Controllers\PensionFormController;
-
+use App\Http\Controllers\CaptchaController;
+Route::get('/captcha/generate', [CaptchaController::class, 'generate']);
 Route::post('/sample_encrypt', [ValidateMobileController::class, 'sample_encrypt']);
 Route::post('/public/validate/mobile', [ValidateMobileController::class, 'mobilecheck']);
 Route::post('/public/validate/checkotp', [ValidateMobileController::class, 'otpcheck']);

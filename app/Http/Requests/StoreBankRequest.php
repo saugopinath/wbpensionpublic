@@ -6,7 +6,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
 use App\Helpers\EncryptDecrypt;
 use Illuminate\Http\Request;
-
+use App\Rules\ValidateCaptchaRule;
 use Config;
 class StoreBankRequest extends FormRequest
 {
@@ -28,6 +28,8 @@ class StoreBankRequest extends FormRequest
                     'bank_ifsc_code' => $request_data['formData']['bank_ifsc_code'],
                     'bank_account_number' => $request_data['formData']['bank_account_number'],
                     'confirm_bank_account_number' => $request_data['formData']['confirm_bank_account_number'],
+                    'captcha_token' =>  $request_data['formData']['captcha_token'],
+                    'captcha_answer' =>  $request_data['formData']['captcha_answer'],
                     
                 ]);
                 
@@ -88,7 +90,9 @@ class StoreBankRequest extends FormRequest
             'bank_ifsc_code' => 'required',
             'bank_account_number' => 'required|numeric|required_with:confirm_bank_account_number|same:confirm_bank_account_number',
             'confirm_bank_account_number' => 'required|numeric',
-            
+            'captcha_token' => 'required',
+            'captcha_answer' => ['required_with:data', new ValidateCaptchaRule($this->captcha_token)],
+
         ];
     }
 }

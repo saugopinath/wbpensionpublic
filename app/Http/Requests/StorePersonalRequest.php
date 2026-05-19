@@ -7,7 +7,7 @@ use Illuminate\Support\Str;
 use App\Helpers\EncryptDecrypt;
 use Illuminate\Http\Request;
 use App\Rules\Aadhaar;
-
+use App\Rules\ValidateCaptchaRule;
 use Config;
 
 class StorePersonalRequest extends FormRequest
@@ -39,6 +39,8 @@ class StorePersonalRequest extends FormRequest
                     'caste_category' =>  $request_data['formData']['caste_category'],
                     'aadhar_no' =>  $request_data['formData']['aadhar_no'],
                     'ben_mobile_no' =>  $request_data['formData']['ben_mobile_no'],
+                    'captcha_token' =>  $request_data['formData']['captcha_token'],
+                    'captcha_answer' =>  $request_data['formData']['captcha_answer'],
                 ]);
                 if( $request_data['formData']['caste_category']==171 || $request_data['formData']['caste_category']==172){
                     $this->merge([
@@ -133,6 +135,10 @@ class StorePersonalRequest extends FormRequest
             'caste_category' => 'required_with:data|in:' . implode(",", $caste_key),
             'aadhar_no' => ['required_with:data', 'digits:12', new Aadhaar],
             'ben_mobile_no' => 'required_with:data|digits:10',
+            'captcha_token' => 'required',
+            'captcha_answer' => 'required',
+            'captcha_answer' => ['required_with:data', new ValidateCaptchaRule($this->captcha_token)],
+
             
         ];
     }

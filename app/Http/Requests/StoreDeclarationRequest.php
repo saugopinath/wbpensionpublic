@@ -6,7 +6,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
 use App\Helpers\EncryptDecrypt;
 use Illuminate\Http\Request;
-
+use App\Rules\ValidateCaptchaRule;
 use Config;
 class StoreDeclarationRequest extends FormRequest
 {
@@ -28,6 +28,8 @@ class StoreDeclarationRequest extends FormRequest
                     'is_resident' => $request_data['formData']['doc_is_resident'],
                     'earn_monthly_remuneration' => $request_data['formData']['earn_monthly_remuneration'],
                     'info_genuine_decl' => $request_data['formData']['info_genuine_decl'],
+                    'captcha_token' =>  $request_data['formData']['captcha_token'],
+                    'captcha_answer' =>  $request_data['formData']['captcha_answer'],
                     
                 ]);
                 
@@ -71,7 +73,9 @@ class StoreDeclarationRequest extends FormRequest
         return [
            'is_resident' => 'required|in:1',
             'earn_monthly_remuneration' => 'required|in:1',
-            'info_genuine_decl' => 'required|in:1'
+            'info_genuine_decl' => 'required|in:1',
+            'captcha_token' => 'required',
+            'captcha_answer' => 'required',
             
         ];
     }

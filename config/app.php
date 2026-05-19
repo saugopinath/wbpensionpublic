@@ -123,5 +123,6 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
      'otp_expiration' => env('OTP_EXPIRATION', 2),
+     'queue_enable' => env('QUEUE_ENABLE', false),
 
 ];
