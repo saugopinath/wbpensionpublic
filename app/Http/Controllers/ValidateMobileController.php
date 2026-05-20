@@ -26,7 +26,6 @@ class ValidateMobileController extends Controller
     public function mobilecheck(ValidateMobileRequest $request)
     {
         // dd('ok');
-  return response()->json(["ggg" => ok]);  
         try {
             $validated = $request->validated();
             $request_data = EncryptDecrypt::decrypt($request->data);

@@ -15,10 +15,10 @@ class ValidateMobileRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-       return true;
         if ($this->has('data') && !empty($this->data)) {
             try {
                 $request_data = EncryptDecrypt::decrypt($this->data);
+                \Log::info('Decrypted request data: ', is_array($request_data) ? $request_data : ['raw' => $request_data]);
                 
                 $this->merge([
                     'mobile_no' => $request_data['formData']['mobile_no'] ?? null,
@@ -27,7 +27,7 @@ class ValidateMobileRequest extends FormRequest
                     'scheme_id' => $request_data['extraData']['scheme_id'] ?? null,
                 ]);
             } catch (\Exception $e) {
-               return false;
+                \Log::error('Decryption failed in ValidateMobileRequest: ' . $e->getMessage());
             }
         }
 
