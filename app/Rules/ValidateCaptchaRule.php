@@ -4,38 +4,58 @@ namespace App\Rules;
 
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Support\Facades\Cache;
+use App\Helpers\EncryptDecrypt;
 
 class ValidateCaptchaRule implements ValidationRule
 {
-     protected $captcha_token;
+    protected $captcha_token;
 
-    // Receive the argument here
-    public function __construct(string $captcha_token)
+    /**
+     * Create a new rule instance.
+     *
+     * @param string|null $captcha_token
+     */
+    public function __construct(?string $captcha_token)
     {
         $this->captcha_token = $captcha_token;
     }
+
     /**
      * Run the validation rule.
      *
-     * @param  \Closure(string, ?string=): \Illuminate\Translation\PotentiallyTranslatedString  $fail
+     * @param  \string  $attribute
+     * @param  \mixed  $value
+     * @param  \Closure(string): \Illuminate\Translation\PotentiallyTranslatedString  $fail
      */
-     public function passes($attribute, $value)
+    public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        $cachedAnswer = Cache::get("captcha:{$request->token}");
-
-        // Validate if token expired or answer is incorrect
-        if (!$cachedAnswer || (int)$value !== (int)$cachedAnswer) {
-            return false;
+        if (empty($this->captcha_token)) {
+            $fail('The captcha token is missing.');
+            return;
         }
 
-        // Clean up cache after successful validation
-        Cache::forget("captcha:{$value}");
+        try {
+            $decoded = base64_decode($this->captcha_token, true);
+            if ($decoded === false) {
+                $fail('The captcha token is invalid.');
+                return;
+            }
+            $decryptedToken = EncryptDecrypt::decrypt($decoded);
+        } catch (\Throwable $e) {
+            $fail('The captcha token is invalid.');
+            return;
+        }
 
-       return true;
-    }
-
-    public function message()
-    {
-        return 'The :attribute is not a valid Captcha.';
+        if (empty($decryptedToken)) {
+            $fail('The captcha token is invalid.');
+            return;
+        }
+        $cachedAnswer = Cache::get("captcha:{$decryptedToken}");
+        if (is_null($cachedAnswer) || (int)$value !== (int)$cachedAnswer) {
+            $fail('The captcha is invalid or has expired.');
+            return;
+        }
+        Cache::forget("captcha:{$decryptedToken}");
     }
 }

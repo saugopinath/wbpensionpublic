@@ -12,43 +12,32 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;  
 use App\Helpers\TokenValidation;
+use App\Http\Requests\ValidateMobileRequest;
+
 class ValidateMobileController extends Controller
 {
-   public function __construct
-   (
-       
+    public function __construct(
+
         protected SendSmsService $sendsmsService,
     ) {
-         $this->data_not_supplied=__('messages.invaliddata');
-         $this->scheme_id=20;
+        $this->data_not_supplied = __('messages.invaliddata');
+        $this->scheme_id = 20;
     }
-    public function mobilecheck(Request $request)
+    public function mobilecheck(ValidateMobileRequest $request)
     {
-       // dd('ok');
+        // dd('ok');
+  return response()->json(["ggg" => ok]);  
         try {
-            if(!TokenValidation::notEmptyCheck($request)){
-                 return response()->json(['is_sucess' => false, 'error' => $this->data_not_supplied], 400);
-              }
-             $request_data = EncryptDecrypt::decrypt($request->data);
-             $mobile_no=$request_data['formData']['mobile_no'];
-             //dd($mobile_no);
-             if(!TokenValidation::mobileNoValidation($mobile_no)){
-                 $errorMsg =  __('messages.mobilenoinvalid');
-                return response()->json(["is_success" => false,'error' => $errorMsg]);
-             }
-             $scheme_id=$request_data['extraData']['scheme_id'];
-             //dd($this->schemeValidation($scheme_id));
-             if(!TokenValidation::schemeValidation($scheme_id)){
-                 $errorMsg =  __('messages.mobilenoinvalid');
-                return response()->json(["is_success" => false,'error' => $errorMsg]);
-             }
+            $validated = $request->validated();
+            $request_data = EncryptDecrypt::decrypt($request->data);
+            $mobile_no = $validated['mobile_no'];
+            $scheme_id = $validated['scheme_id'];
              
                 if (config('app.env') == 'production')
                 $otp = rand(111111, 999999);
             else
                 $otp = 853154;
-            $message = __('messages.otpmessage')." is " . $otp . ".   
-__('messages.govtwb').";
+            $message = __('messages.otpmessage')." is " . $otp . ".__('messages.govtwb').";
             
             $encrpt_otp=EncryptDecrypt::encrypt($otp);
             DB::beginTransaction();
@@ -85,7 +74,7 @@ __('messages.govtwb').";
                 return response()->json(["is_success" => false,'error' => $errorMsg]);
             }   
         } catch (\Throwable $e) {
-            dd($e);
+          
             return response()->json([
             "is_success" => false,'error' => __('messages.unexpectederror') ,
             'message' => $e->getMessage()
