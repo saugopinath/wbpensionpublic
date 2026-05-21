@@ -96,9 +96,7 @@ class PensionFormController extends Controller
              return response()->json(["is_success" => false,'error' => $errorMsg]);
            }
            if (config('app.queue_enable')) {
-            $pension_details = new Collection();
-            $pension_details->scheme_id= $scheme_id;
-            $pension_details->application_id= $application_id;
+            $pension_details=BeneficiaryPersonal::where('scheme_id',$scheme_id)->where('application_id',$application_id)->first();
             $pension_details->add_edit_status= 1;
            }
            else{
@@ -339,7 +337,6 @@ class PensionFormController extends Controller
                 }else{
                 $pension_details_contact=BeneficiaryContact::where('scheme_id',$scheme_id)->where('application_id',$application_id)->first();
                 }
-
              }
              else{
                 if (config('app.queue_enable')) {
@@ -377,16 +374,16 @@ class PensionFormController extends Controller
                     //pension_details_contact->gp_ward_name= trim($gp_ward->gram_panchyat_name);
                     $blockulbCode= $block_ulb->block_ulb;
                 }
-                $pension_details_contact->district_id       =      $validated['district'];
-                $pension_details_contact->rural_urban     =     $validated['urban_code'];
-                $pension_details_contact->policestation  = trim($validated['police_station']);
-                $pension_details_contact->blockurban  = $validated['block_muncipality'];
+                $pension_details_contact->district_id = $validated['district'];
+                $pension_details_contact->rural_urban = $validated['urban_code'];
+                $pension_details_contact->policestation = trim($validated['police_station']);
+                $pension_details_contact->blockurban = $validated['block_muncipality'];
                 $pension_details_contact->gpward = $validated['gp_ward'];
-                $pension_details_contact->village_town_city  = trim($validated['village_town_city']);
-                $pension_details_contact->house_premise_no  = trim($validated['house_premise_no']);
-                $pension_details_contact->post_office   = trim($validated['post_office']);
-                $pension_details_contact->pincode  = trim($validated['pin_code']);
-                $pension_details_contact->ip_address  = $request->ip();
+                $pension_details_contact->village_town_city = trim($validated['village_town_city']);
+                $pension_details_contact->house_premise_no = trim($validated['house_premise_no']);
+                $pension_details_contact->post_office = trim($validated['post_office']);
+                $pension_details_contact->pincode = trim($validated['pin_code']);
+                $pension_details_contact->ip_address = $request->ip();
                 $pension_details_contact->created_by_dist_code = $validated['district'];
                 $pension_details_contact->created_by_local_body_code = $blockulbCode;
                 if (config('app.queue_enable')) {
