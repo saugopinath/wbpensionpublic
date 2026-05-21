@@ -7,8 +7,6 @@ use Illuminate\Support\Str;
 use App\Helpers\EncryptDecrypt;
 use Illuminate\Http\Request;
 use App\Rules\ValidateCaptchaRule;
-use Illuminate\Contracts\Validation\Validator;
-use Illuminate\Http\Exceptions\HttpResponseException;
 use Config;
 class StoreDeclarationRequest extends FormRequest
 {
@@ -77,18 +75,8 @@ class StoreDeclarationRequest extends FormRequest
             'earn_monthly_remuneration' => 'required|in:1',
             'info_genuine_decl' => 'required|in:1',
             'captcha_token' => 'required',
-            'captcha_answer' => ['required_with:data', new ValidateCaptchaRule($this->captcha_token)],
+            'captcha_answer' => 'required',
+            
         ];
-    }
-
-    /**
-     * Handle a failed validation attempt.
-     */
-    protected function failedValidation(Validator $validator)
-    {
-        throw new HttpResponseException(response()->json([
-            'is_success' => false,
-            'error' => $validator->errors()->first()
-        ], 422));
     }
 }

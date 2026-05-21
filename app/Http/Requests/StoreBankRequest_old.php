@@ -7,10 +7,8 @@ use Illuminate\Support\Str;
 use App\Helpers\EncryptDecrypt;
 use Illuminate\Http\Request;
 use App\Rules\ValidateCaptchaRule;
-use Illuminate\Contracts\Validation\Validator;
-use Illuminate\Http\Exceptions\HttpResponseException;
 use Config;
-class StoreDeclarationRequest extends FormRequest
+class StoreBankRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -24,12 +22,12 @@ class StoreDeclarationRequest extends FormRequest
         if ($this->has('data') && !empty($this->data)) {
             try {
                  $request_data = EncryptDecrypt::decrypt($this->data);
-                 //dump($request_data);
+                 //dd($request_data);
                  $this->merge([
                     'application_id' => $request_data['formData']['application_id'],
-                    'is_resident' => $request_data['formData']['doc_is_resident'],
-                    'earn_monthly_remuneration' => $request_data['formData']['earn_monthly_remuneration'],
-                    'info_genuine_decl' => $request_data['formData']['info_genuine_decl'],
+                    'bank_ifsc_code' => $request_data['formData']['bank_ifsc_code'],
+                    'bank_account_number' => $request_data['formData']['bank_account_number'],
+                    'confirm_bank_account_number' => $request_data['formData']['confirm_bank_account_number'],
                     'captcha_token' =>  $request_data['formData']['captcha_token'],
                     'captcha_answer' =>  $request_data['formData']['captcha_answer'],
                     
@@ -48,7 +46,21 @@ class StoreDeclarationRequest extends FormRequest
     {
         return [
             'data.required' =>  __('validation.required'),
+            'beneficiary_name.required' =>  __('validation.required'),
+            'beneficiary_name.required_with' =>  __('validation.required'),
+            'dob.required' =>  __('validation.required'),
+            'dob.required_with' =>  __('validation.required'),
+            'father_first_name.required' =>  __('validation.required'),
+            'father_first_name.required_with' =>  __('validation.required'),
+            'mother_first_name.required' =>  __('validation.required'),
+            'mother_first_name.required_with' =>  __('validation.required'),
+            'caste_category.required' =>  __('validation.required'),
+            'caste_category.required_with' =>  __('validation.required'),
            
+            'aadhar_no.required' =>  __('validation.required'),
+            'aadhar_no.required_with' =>  __('validation.required'),
+            'ben_mobile_no.required' =>  __('validation.required'),
+            'ben_mobile_no.required_with' =>  __('validation.required'),
            
             
            
@@ -58,7 +70,9 @@ class StoreDeclarationRequest extends FormRequest
     {
         return [
             'data' => 'Payload',
-           
+            'bank_ifsc_code' => 'Bank Ifsc',
+            'bank_account_number' => 'Account Number',
+            'confirm_bank_account_number' => 'Confirm Account Number',
             
         ];
     }
@@ -73,22 +87,12 @@ class StoreDeclarationRequest extends FormRequest
     {
         
         return [
-           'is_resident' => 'required|in:1',
-            'earn_monthly_remuneration' => 'required|in:1',
-            'info_genuine_decl' => 'required|in:1',
+            'bank_ifsc_code' => 'required',
+            'bank_account_number' => 'required|numeric|required_with:confirm_bank_account_number|same:confirm_bank_account_number',
+            'confirm_bank_account_number' => 'required|numeric',
             'captcha_token' => 'required',
             'captcha_answer' => ['required_with:data', new ValidateCaptchaRule($this->captcha_token)],
-        ];
-    }
 
-    /**
-     * Handle a failed validation attempt.
-     */
-    protected function failedValidation(Validator $validator)
-    {
-        throw new HttpResponseException(response()->json([
-            'is_success' => false,
-            'error' => $validator->errors()->first()
-        ], 422));
+        ];
     }
 }

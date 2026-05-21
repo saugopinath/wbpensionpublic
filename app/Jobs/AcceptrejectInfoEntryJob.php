@@ -2,28 +2,38 @@
 
 namespace App\Jobs;
 
-
-use App\Models\AcceptRejectInfo;
-use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Bus\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
 
 class AcceptrejectInfoEntryJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-    protected $userData;
+    use Dispatchable, InteractsWithQueue, Queueable;
 
-    // Pass data via the constructor
-    public function __construct(array $userData)
+    public $accept_reject_info;
+
+    /**
+     * Create a new job instance.
+     */
+    public function __construct($accept_reject_info)
     {
-        $this->userData = $userData;
+        $this->accept_reject_info = $accept_reject_info;
     }
 
-    // Logic executed by the queue worker
-    public function handle()
+    /**
+     * Execute the job.
+     */
+        public function handle(): void
     {
-        User::create($this->userData);
+        if ($this->accept_reject_info) {
+            if (isset($this->accept_reject_info->add_edit_status)) {
+                unset($this->accept_reject_info->add_edit_status);
+            }
+            if (isset($this->accept_reject_info->add_edit_sttus)) {
+                unset($this->accept_reject_info->add_edit_sttus);
+            }
+            $this->accept_reject_info->save();
+        }
     }
 }

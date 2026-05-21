@@ -7,8 +7,6 @@ use Illuminate\Support\Str;
 use App\Helpers\EncryptDecrypt;
 use Illuminate\Http\Request;
 use App\Rules\ValidateCaptchaRule;
-use Illuminate\Contracts\Validation\Validator;
-use Illuminate\Http\Exceptions\HttpResponseException;
 use Config;
 
 class StoreContactRequest extends FormRequest
@@ -80,7 +78,13 @@ class StoreContactRequest extends FormRequest
             'residency_period' => 'Number of years Dwelling in WB',
         ];
     }
+    
 
+    /**
+     * Get the validation rules that apply to the request.
+     *
+     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     */
     public function rules(): array
     {
         
@@ -101,12 +105,5 @@ class StoreContactRequest extends FormRequest
 
             
         ];
-    }
-    protected function failedValidation(Validator $validator)
-    {
-        throw new HttpResponseException(response()->json([
-            'is_success' => false,
-            'error' => $validator->errors()->first()
-        ], 422));
     }
 }
