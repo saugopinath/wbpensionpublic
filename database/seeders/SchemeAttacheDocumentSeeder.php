@@ -67,18 +67,37 @@ class SchemeAttacheDocumentSeeder extends Seeder
                 "extension_type" => ['jpg', 'jpeg', 'png', 'pdf'],
                 "mime_type" => ['image/jpg' , 'image/jpeg', 'image/png', 'image/bmp', 'image/gif', 'application/pdf'],
 
+            ),
+            array(
+                "scheme_id" => 20,
+                "doc_type_id" => Codemaster::getIdByCode(164),
+                "is_required" => true,
+                "max_file_size" => "500KB",
+                "extension_type" => ['jpg', 'jpeg', 'png', 'pdf'],
+                "mime_type" => ['image/jpg' , 'image/jpeg', 'image/png', 'image/bmp', 'image/gif', 'application/pdf'],
+            ),
+            array(
+                "scheme_id" => 20,
+                "doc_type_id" => Codemaster::getIdByCode(166),
+                "is_required" => true,
+                "max_file_size" => "500KB",
+                "extension_type" => ['jpg', 'jpeg', 'png', 'pdf'],
+                "mime_type" => ['image/jpg' , 'image/jpeg', 'image/png', 'image/bmp', 'image/gif', 'application/pdf'],
             )
         );
         foreach ($scheme_attache as $item) {
-            SchemeAttachedDocMappings::create([
-                'scheme_id'      => $item['scheme_id'],
-                'doc_type_id'    => $item['doc_type_id'],
-                'is_required'    => $item['is_required'],
-                'max_file_size'  => $item['max_file_size'],
-                'mime_type' => implode(',', $item['mime_type']),
-                'extension_type' => implode(',', $item['extension_type']
-                )
-            ]);
+            SchemeAttachedDocMappings::updateOrCreate(
+                [
+                    'scheme_id'      => $item['scheme_id'],
+                    'doc_type_id'    => $item['doc_type_id'],
+                ],
+                [
+                    'is_required'    => $item['is_required'],
+                    'max_file_size'  => $item['max_file_size'],
+                    'mime_type'      => implode(',', $item['mime_type']),
+                    'extension_type' => implode(',', $item['extension_type'])
+                ]
+            );
         }
     }
 }

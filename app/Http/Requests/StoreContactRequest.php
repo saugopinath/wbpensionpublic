@@ -7,11 +7,13 @@ use Illuminate\Support\Str;
 use App\Helpers\EncryptDecrypt;
 use Illuminate\Http\Request;
 use App\Rules\ValidateCaptchaRule;
-use Config;
+use Illuminate\Contracts\Validation\Validator;
+use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Support\Facades\Config;
 
 class StoreContactRequest extends FormRequest
 {
-     /**
+    /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
@@ -22,9 +24,9 @@ class StoreContactRequest extends FormRequest
     {
         if ($this->has('data') && !empty($this->data)) {
             try {
-                 $request_data = EncryptDecrypt::decrypt($this->data);
+                $request_data = EncryptDecrypt::decrypt($this->data);
                 // dd($request_data);
-                 $this->merge([
+                $this->merge([
                     'application_id' => $request_data['formData']['application_id'],
                     'district' => $request_data['formData']['district'],
                     'urban_code' => $request_data['formData']['urban_code'],
@@ -32,36 +34,31 @@ class StoreContactRequest extends FormRequest
                     'block_muncipality' => $request_data['formData']['block_muncipality'],
                     'gp_ward' => $request_data['formData']['gp_ward'],
                     'village_town_city' => $request_data['formData']['village_town_city'],
-                    'house_premise_no' => $request_data['formData']['house_premise_no']?$request_data['formData']['house_premise_no']:'',
+                    'house_premise_no' => $request_data['formData']['house_premise_no'] ? $request_data['formData']['house_premise_no'] : '',
                     'post_office' => $request_data['formData']['post_office'],
                     'pin_code' => $request_data['formData']['pin_code'],
                     'captcha_token' =>  $request_data['formData']['captcha_token'],
                     'captcha_answer' =>  $request_data['formData']['captcha_answer'],
-                    
+
                 ]);
-                
-             // dd($this->application_id);
-                
+
+                // dd($this->application_id);
+
             } catch (\Exception $e) {
                 dd($e);
                 // If the data cannot be decrypted, it fails validation naturally
                 // or you can handle it by doing nothing, leaving it invalid.
             }
         }
-         
     }
     public function messages(): array
     {
         return [
             'data.required' =>  __('validation.required'),
             'district.required' =>  __('validation.required'),
-            
-           
-            
-           
         ];
     }
-     public function attributes(): array
+    public function attributes(): array
     {
         return [
             'data' => 'Payload',
@@ -75,19 +72,12 @@ class StoreContactRequest extends FormRequest
             'house_premise_no' => 'House / Premise No.',
             'post_office' => 'Post Office',
             'pin_code' => 'Pin Code',
-            'residency_period' => 'Number of years Dwelling in WB',
         ];
     }
-    
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
-     */
     public function rules(): array
     {
-        
+
         return [
             'data' => 'required',
             'application_id' => 'required_with:data',
@@ -100,10 +90,19 @@ class StoreContactRequest extends FormRequest
             'house_premise_no' => 'string|nullable',
             'post_office' => 'required|string',
             'pin_code' => 'required|numeric|digits:6',
-            'captcha_token' => 'required',
-            'captcha_answer' => ['required_with:data', new ValidateCaptchaRule($this->captcha_token)],
+            'captcha_token' => Config::get('constants.enable_captcha') ? 'required' : 'nullable',
+            'captcha_answer' => Config::get('constants.enable_captcha') 
+                ? ['required', new ValidateCaptchaRule($this->captcha_token)]
+                : ['nullable'],
 
-            
+
         ];
+    }
+    protected function failedValidation(Validator $validator)
+    {
+        throw new HttpResponseException(response()->json([
+            'is_success' => false,
+            'error' => $validator->errors()->first()
+        ], 422));
     }
 }

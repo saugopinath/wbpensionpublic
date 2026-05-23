@@ -28,10 +28,10 @@ class AcceptRejectInfo extends Model implements Auditable
         return $this->belongsTo(Codemaster::class, 'revert_reason_cause_id');
     }
 
-    public function application()
-    {
-        return $this->belongsTo(BeneficiaryCommonList::class, 'application_id', 'sourceable_id');
-    }
+    // public function application()
+    // {
+    //     return $this->belongsTo(BeneficiaryCommonList::class, 'application_id', 'sourceable_id');
+    // }
 
     public function user()
     {
