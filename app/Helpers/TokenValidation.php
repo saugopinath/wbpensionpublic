@@ -92,22 +92,11 @@ class TokenValidation
     }
     public static function schemeValidation($scheme_id)
     {
-         //dump($scheme_id);dd($this->scheme_id);
-
-             if (!is_int($scheme_id)) {
-                //dd('ok');
-                 return false;
-                        //$errorMsg =  __('messages.mobilenoinvalid');
-                        //return response()->json(["is_success" => false,'error' => $errorMsg]);
-             }
-            if ($scheme_id != 20) {
-               // dd('ok2');
-                     return false;
-                        //$errorMsg =  __('messages.mobilenoinvalid');
-                       // return response()->json(["is_success" => false,'error' => $errorMsg]);
-            }
-             return true;
-           
+        $scheme_id = (int) $scheme_id;
+        if ($scheme_id != 20) {
+            return false;
+        }
+        return true;
     }
     public static function mobileNoValidation($mobile_no)
     {

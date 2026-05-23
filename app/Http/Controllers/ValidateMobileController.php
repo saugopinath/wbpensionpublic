@@ -13,9 +13,14 @@ use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;  
 use App\Helpers\TokenValidation;
 use App\Http\Requests\ValidateMobileRequest;
+use App\Http\Requests\ValidateOtpRequest;
+use Illuminate\Support\Facades\Log;
 
 class ValidateMobileController extends Controller
 {
+    protected $data_not_supplied;
+    protected $scheme_id;
+
     public function __construct(
 
         protected SendSmsService $sendsmsService,
@@ -26,9 +31,9 @@ class ValidateMobileController extends Controller
     public function mobilecheck(ValidateMobileRequest $request)
     {
         // dd('ok');
-  return response()->json(["ggg" => ok]);  
         try {
             $validated = $request->validated();
+            Log::info('Decrypted request data: ', is_array($validated) ? $validated : ['raw' => $validated]);
             $request_data = EncryptDecrypt::decrypt($request->data);
             $mobile_no = $validated['mobile_no'];
             $scheme_id = $validated['scheme_id'];
@@ -82,57 +87,59 @@ class ValidateMobileController extends Controller
         } 
         
     }
-    public function otpcheck(Request $request)
+    public function otpcheck(ValidateOtpRequest $request)
     {
-        if(!TokenValidation::notEmptyCheck($request)){
-                 return response()->json(['is_sucess' => false, 'error' => $this->data_not_supplied], 400);
-              }
-             $request_data = EncryptDecrypt::decrypt($request->data);
-             $mobile_no=$request_data['extraData']['mobile_no'];
-             $scheme_id=$request_data['extraData']['scheme_id'];
-             $otp=$request_data['formData']['otp'];
-             //dd($request_data);
-             $token_valid=TokenValidation::checkTokenMobileScheme($request_data,$request);
-            // dd($token_valid);
-             if(!$token_valid){
-                 $errorMsg =  __('messages.invalidToken');
-                return response()->json(["is_success" => false,'error' => $errorMsg]);
-             }
-             $token_expire=TokenValidation::checkOtp($request_data,$request);
-            //dd($token_expire);
-             if(!$token_expire){
-                 $errorMsg =  __('messages.invalidOtp');
-                return response()->json(["is_success" => false,'error' => $errorMsg]);
-             }
-       
-                
-                
-                $token= request()->bearerToken();
+        if (!TokenValidation::notEmptyCheck($request)) {
+            return response()->json(['is_sucess' => false, 'error' => $this->data_not_supplied], 400);
+        }else {
+
+            try {
+                $validated = $request->validated();
+                $request_data = EncryptDecrypt::decrypt($request->data);
+                $mobile_no = $validated['mobile_no'];
+                $scheme_id = $validated['scheme_id'];
+                $otp = $validated['otp'];
+    
+                $token_valid = TokenValidation::checkTokenMobileScheme($request_data, $request);
+                if (!$token_valid) {
+                    $errorMsg = __('messages.invalidToken');
+                    return response()->json(["is_success" => false, 'error' => $errorMsg]);
+                }
+    
+                $token_expire = TokenValidation::checkOtp($request_data, $request);
+                if (!$token_expire) {
+                    $errorMsg = __('messages.invalidOtp');
+                    return response()->json(["is_success" => false, 'error' => $errorMsg]);
+                }
+    
+                $token = request()->bearerToken();
                 $claims = JWTAuth::getJWTProvider()->decode(base64_decode($token));
+                $decrpt_sub = EncryptDecrypt::decrypt(base64_decode($claims['sub']));
+    
+                $insert = $this->sendsmsService->OtpValidationLogInsert($mobile_no, $decrpt_sub, $request);
+                if ($insert) {
+                    $payload = JWTFactory::sub(base64_encode(EncryptDecrypt::encrypt($insert)))
+                        ->mobile_no(base64_encode(EncryptDecrypt::encrypt($mobile_no)))
+                        ->scheme_id(base64_encode(EncryptDecrypt::encrypt($scheme_id)))
+                        ->otpValidatetimeexp(Carbon::now()->addMinutes((int) config('jwt.ttl'))->format('Y-m-d H:i:s'))
+                        ->otpValidate(base64_encode(EncryptDecrypt::encrypt('annapurna-2026')))
+                        ->make();
+    
+                    $token = JWTAuth::encode($payload);
+                    return response()->json(["is_success" => true, 'token' => base64_encode($token)]);
+                } else {
+                    $errorMsg = __('messages.dbroolback');
+                    return response()->json(["is_success" => false, 'error' => $errorMsg]);
+                }
+            } catch (\Throwable $e) {
+                return response()->json([
+                    "is_success" => false,
+                    'error' => __('messages.unexpectederror'),
+                    'message' => $e->getMessage()
+                ], 500);
+            }
+        }
 
-                $decrpt_sub=EncryptDecrypt::decrypt(base64_decode($claims['sub']));
-                
-                $insert = $this->sendsmsService->OtpValidationLogInsert($mobile_no,$decrpt_sub,$request);
-if( $insert){
-               $payload = JWTFactory::sub(base64_encode(EncryptDecrypt::encrypt($insert)))
-                ->mobile_no(base64_encode(EncryptDecrypt::encrypt($mobile_no)))
-                ->scheme_id(base64_encode(EncryptDecrypt::encrypt($scheme_id)))
-                ->otpValidatetimeexp(Carbon::now()->addMinutes((int) config('jwt.ttl'))->format('Y-m-d H:i:s'))
-                ->otpValidate(base64_encode(EncryptDecrypt::encrypt('annapurna-2026')))
-                ->make();
-
-               // $token = JWTAuth::encode($payload);
-                $token = JWTAuth::encode($payload);
-               // dd($token);
-                return response()->json(["is_success" => true,'token' => base64_encode($token)]);
-}
-else{
-     $errorMsg = __('messages.dbroolback');
-                return response()->json(["is_success" => false,'error' => $errorMsg]);
-}
-
-                 
-        
     }
     public function guestdashboardcheck(Request $request)
     {
@@ -145,15 +152,10 @@ else{
                  $errorMsg =  __('messages.mobilenoinvalid');
                 return response()->json(["is_success" => false,'error' => $errorMsg]);
              }
-            
-            
-               
                 $token= request()->bearerToken();
                 $mobile_no = $request->input('mobile_no');
                 $claims = JWTAuth::getJWTProvider()->decode(base64_decode($token));
-
                 $decrpt_sub=EncryptDecrypt::decrypt(base64_decode($claims['sub']));
-                
                 $insert = $this->sendsmsService->OtpValidationLogInsert($request->mobile_no,$decrpt_sub,$request);
 if( $insert){
                $payload = JWTFactory::sub(base64_encode(EncryptDecrypt::encrypt($insert)))

@@ -5,6 +5,7 @@ namespace App\Rules;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use App\Helpers\EncryptDecrypt;
 
 class ValidateCaptchaRule implements ValidationRule
@@ -34,19 +35,22 @@ class ValidateCaptchaRule implements ValidationRule
             $fail('The captcha token is missing.');
             return;
         }
+        Log::error('captcha_token: ' . $this->captcha_token);
 
         try {
             $decoded = base64_decode($this->captcha_token, true);
             if ($decoded === false) {
+                Log::error('ValidateCaptchaRule: base64_decode failed');
                 $fail('The captcha token is invalid.');
                 return;
             }
             $decryptedToken = EncryptDecrypt::decrypt($decoded);
+            Log::info('ValidateCaptchaRule decryptedToken: ' . $decryptedToken);
         } catch (\Throwable $e) {
+            Log::error('ValidateCaptchaRule decryption exception: ' . $e->getMessage());
             $fail('The captcha token is invalid.');
             return;
         }
-
         if (empty($decryptedToken)) {
             $fail('The captcha token is invalid.');
             return;

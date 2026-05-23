@@ -5,6 +5,9 @@ namespace App\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use App\Helpers\EncryptDecrypt;
 use App\Rules\ValidateCaptchaRule;
+use Illuminate\Contracts\Validation\Validator;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Http\Exceptions\HttpResponseException;
 
 class ValidateMobileRequest extends FormRequest
 {
@@ -15,10 +18,13 @@ class ValidateMobileRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-       return true;
+        // dd('ok');
+        Log::info('ValidateMobileRequest start');
         if ($this->has('data') && !empty($this->data)) {
+            Log::info('Decrypted request data: ', is_array($this->data) ? $this->data : ['raw' => $this->data]);
             try {
                 $request_data = EncryptDecrypt::decrypt($this->data);
+                Log::info('Decrypted request data: ', is_array($request_data) ? $request_data : ['raw' => $request_data]);
                 
                 $this->merge([
                     'mobile_no' => $request_data['formData']['mobile_no'] ?? null,
@@ -27,7 +33,7 @@ class ValidateMobileRequest extends FormRequest
                     'scheme_id' => $request_data['extraData']['scheme_id'] ?? null,
                 ]);
             } catch (\Exception $e) {
-               return false;
+                Log::error('Decryption failed in ValidateMobileRequest: ' . $e->getMessage());
             }
         }
 
@@ -51,5 +57,16 @@ class ValidateMobileRequest extends FormRequest
             'captcha_token' => 'Captcha Token',
             'captcha_answer' => 'Captcha Answer',
         ];
+    }
+
+    /**
+     * Handle a failed validation attempt.
+     */
+    protected function failedValidation(Validator $validator)
+    {
+        throw new HttpResponseException(response()->json([
+            'is_success' => false,
+            'error' => $validator->errors()->first()
+        ], 422));
     }
 }

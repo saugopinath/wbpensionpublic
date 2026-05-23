@@ -99,6 +99,12 @@ class OpTypeSeeder extends Seeder
                 "parent_short_code" => "op_type",
                  "code" => "21105",
             ),
+            array(
+                "name" => "OP TYPE FOR PUBLIC FAMILY ENTRY",
+                "short_name" => "OPTYPEFAMILY",
+                "parent_short_code" => "op_type",
+                 "code" => "21106",
+            ),
         );
         foreach ($codemasterChilds as $codemasterChild_item) {
             Codemaster::updateOrCreate([

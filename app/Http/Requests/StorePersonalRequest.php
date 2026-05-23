@@ -8,7 +8,9 @@ use App\Helpers\EncryptDecrypt;
 use Illuminate\Http\Request;
 use App\Rules\Aadhaar;
 use App\Rules\ValidateCaptchaRule;
-use Config;
+use Illuminate\Contracts\Validation\Validator;
+use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Support\Facades\Config;
 
 class StorePersonalRequest extends FormRequest
 {
@@ -23,39 +25,38 @@ class StorePersonalRequest extends FormRequest
     {
         if ($this->has('data') && !empty($this->data)) {
             try {
-                 $request_data = EncryptDecrypt::decrypt($this->data);
-                 //dump($request_data);
-                 $this->merge([
-                    
-                    'beneficiary_name' => $request_data['formData']['beneficiary_name'],
-                    'gender' =>  $request_data['formData']['gender'],
-                    'dob' =>  $request_data['formData']['dob'],
-                    'father_first_name' =>  $request_data['formData']['father_first_name'],
-                    'father_middle_name' =>  $request_data['formData']['father_middle_name'],
-                    'father_last_name' =>  $request_data['formData']['father_last_name'],
-                    'mother_first_name' =>  $request_data['formData']['mother_first_name'],
-                    'mother_middle_name' =>  $request_data['formData']['mother_middle_name'],
-                    'mother_last_name' =>  $request_data['formData']['mother_last_name'],
-                    'caste_category' =>  $request_data['formData']['caste_category'],
-                    'aadhar_no' =>  $request_data['formData']['aadhar_no'],
-                    'ben_mobile_no' =>  $request_data['formData']['ben_mobile_no'],
-                    'captcha_token' =>  $request_data['formData']['captcha_token'],
-                    'captcha_answer' =>  $request_data['formData']['captcha_answer'],
+                $request_data = EncryptDecrypt::decrypt($this->data);
+                $this->merge([
+                    'beneficiary_name' => $request_data['formData']['beneficiary_name'] ?? null,
+                    'gender' =>  $request_data['formData']['gender'] ?? null,
+                    'dob' =>  $request_data['formData']['dob'] ?? null,
+                    'father_first_name' =>  $request_data['formData']['father_first_name'] ?? null,
+                    'father_middle_name' =>  $request_data['formData']['father_middle_name'] ?? '',
+                    'father_last_name' =>  $request_data['formData']['father_last_name'] ?? null,
+                    'mother_first_name' =>  $request_data['formData']['mother_first_name'] ?? null,
+                    'mother_middle_name' =>  $request_data['formData']['mother_middle_name'] ?? '',
+                    'mother_last_name' =>  $request_data['formData']['mother_last_name'] ?? null,
+                    'caste_category' =>  $request_data['formData']['caste_category'] ?? null,
+                    'aadhar_no' =>  $request_data['formData']['aadhar_no'] ?? null,
+                    'ben_mobile_no' =>  $request_data['formData']['ben_mobile_no'] ?? null,
+                    'captcha_token' =>  $request_data['formData']['captcha_token'] ?? null,
+                    'captcha_answer' =>  $request_data['formData']['captcha_answer'] ?? null,
+                    'caste_certificate_no' =>  $request_data['formData']['caste_certificate_no'] ?? '',
+                    'marital_status' =>  $request_data['formData']['marital_status'] ?? null,
+                    'spouse_first_name' =>  $request_data['formData']['spouse_first_name'] ?? '',
+                    'spouse_middle_name' =>  $request_data['formData']['spouse_middle_name'] ?? '',
+                    'spouse_last_name' =>  $request_data['formData']['spouse_last_name'] ?? '',
+                    'email' =>  $request_data['formData']['email'] ?? '',
+                    'ration_card_no' =>  $request_data['formData']['ration_card_no'] ?? null,
+                    'epic_card_no' =>  $request_data['formData']['epic_card_no'] ?? null,
+                    'pan_no' =>  $request_data['formData']['pan_no'] ?? null,
+                    'has_pan_card' =>  $request_data['formData']['has_pan_card'] ?? null,
+                    'is_taxpayer' =>  $request_data['formData']['is_taxpayer'] ?? null,
                 ]);
-                if( $request_data['formData']['caste_category']==171 || $request_data['formData']['caste_category']==172){
-                    $this->merge([
-                    'caste_certificate_no' => $request_data['formData']['caste_certificate_no'],
-                    
-                ]);
-
-                }
             } catch (\Exception $e) {
-                dd($e);
-                // If the data cannot be decrypted, it fails validation naturally
-                // or you can handle it by doing nothing, leaving it invalid.
+                // Ignore decryption errors here, will fail validation rules
             }
         }
-         
     }
     public function messages(): array
     {
@@ -71,17 +72,17 @@ class StorePersonalRequest extends FormRequest
             'mother_first_name.required_with' =>  __('validation.required'),
             'caste_category.required' =>  __('validation.required'),
             'caste_category.required_with' =>  __('validation.required'),
-           
+
             'aadhar_no.required' =>  __('validation.required'),
             'aadhar_no.required_with' =>  __('validation.required'),
             'ben_mobile_no.required' =>  __('validation.required'),
             'ben_mobile_no.required_with' =>  __('validation.required'),
-           
-            
-           
+
+
+
         ];
     }
-     public function attributes(): array
+    public function attributes(): array
     {
         return [
             'data' => 'Payload',
@@ -103,7 +104,7 @@ class StorePersonalRequest extends FormRequest
             'spouse_last_name' => 'Spouse Last Name',
         ];
     }
-    
+
 
     /**
      * Get the validation rules that apply to the request.
@@ -131,18 +132,40 @@ class StorePersonalRequest extends FormRequest
             'beneficiary_name' => 'required_with:data',
             'dob' => 'required_with:data|date|before_or_equal:' . $max_dob . '|after_or_equal:' . $min_dob,
             'father_first_name' => 'required_with:data|string|max:200|regex:/^[A-Za-z\s]+$/',
+            'father_middle_name' => 'nullable|string|max:200',
+            'father_last_name' => 'required_with:data|string|max:200',
             'mother_first_name' => 'required_with:data|string|max:200|regex:/^[A-Za-z\s]+$/',
+            'mother_middle_name' => 'nullable|string|max:200',
+            'mother_last_name' => 'required_with:data|string|max:200',
             'caste_category' => 'required_with:data|in:' . implode(",", $caste_key),
+            'caste_certificate_no' => 'nullable|string|max:200',
             'aadhar_no' => ['required_with:data', 'digits:12', new Aadhaar],
             'ben_mobile_no' => 'required_with:data|digits:10',
-            'captcha_token' => 'required',
-            'captcha_answer' => 'required',
-            'captcha_answer' => ['required_with:data', new ValidateCaptchaRule($this->captcha_token)],
-
-            
+            'captcha_token' => Config::get('constants.enable_captcha') ? 'required' : 'nullable',
+            'captcha_answer' => Config::get('constants.enable_captcha')
+                ? ['required', new ValidateCaptchaRule($this->captcha_token)]
+                : ['nullable'],
+            'marital_status' => 'nullable|string',
+            'spouse_first_name' => 'nullable|string|max:200',
+            'spouse_middle_name' => 'nullable|string|max:200',
+            'spouse_last_name' => 'nullable|string|max:200',
+            'email' => 'nullable|email|max:200',
+            'ration_card_no' => 'nullable|string|min:8|max:20|regex:/^[A-Za-z0-9]+$/',
+            'epic_card_no' => 'required_with:data|string|min:8|max:20|regex:/^[A-Za-z0-9]+$/',
+            'has_pan_card' => 'required_with:data|string|in:yes,no',
+            'pan_no' => 'required_if:has_pan_card,yes|nullable|string|size:10|regex:/^[A-Za-z]{5}[0-9]{4}[A-Za-z]{1}$/',
+            'is_taxpayer' => 'required_with:data|string|in:yes,no',
         ];
     }
-    
-   
-   
+
+    /**
+     * Handle a failed validation attempt.
+     */
+    protected function failedValidation(Validator $validator)
+    {
+        throw new HttpResponseException(response()->json([
+            'is_success' => false,
+            'error' => $validator->errors()->first()
+        ], 422));
+    }
 }

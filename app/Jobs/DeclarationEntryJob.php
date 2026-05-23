@@ -2,26 +2,49 @@
 
 namespace App\Jobs;
 
+use App\Models\BeneficiarySelfDeclaration;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Bus\Queueable;
+use Illuminate\Queue\InteractsWithQueue;
 
-class declarationEntryJob implements ShouldQueue
+class DeclarationEntryJob implements ShouldQueue
 {
-    use Queueable;
+    use Dispatchable, InteractsWithQueue, Queueable;
+
+    public $payload;
 
     /**
      * Create a new job instance.
      */
-    public function __construct()
+    public function __construct(array $payload)
     {
-        //
+        $this->payload = $payload;
     }
 
     /**
      * Execute the job.
      */
-    public function handle(): void
+    public function handle()
     {
-        //
+        if (isset($this->payload['add_edit_sttus'])) {
+            unset($this->payload['add_edit_sttus']);
+        }
+        if (isset($this->payload['add_edit_status'])) {
+            unset($this->payload['add_edit_status']);
+        }
+        
+        // Ensure other_details is stored as json if it's an array
+        if (isset($this->payload['other_details']) && is_array($this->payload['other_details'])) {
+            $this->payload['other_details'] = json_encode($this->payload['other_details']);
+        }
+
+        return BeneficiarySelfDeclaration::updateOrCreate(
+            [
+                'scheme_id' => $this->payload['scheme_id'],
+                'application_id' => $this->payload['application_id'],
+            ],
+            $this->payload
+        );
     }
 }

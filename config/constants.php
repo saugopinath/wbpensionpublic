@@ -259,4 +259,5 @@ return [
         '2025' => '2025',
     ],
     'EncryptionKey'=>'wltHCqXLI0rTIZtjY2tw9FuglpZFIcHzBhBZAG9ADKw=',
+    'enable_captcha' => env('ENABLE_CAPTCHA', true),
 ];
