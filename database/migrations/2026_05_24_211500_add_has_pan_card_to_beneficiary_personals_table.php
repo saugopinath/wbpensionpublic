@@ -12,10 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('pension.beneficiary_personals', function (Blueprint $table) {
-            $table->string('ration_card_no', 20)->nullable();
-            $table->string('epic_card_no', 20)->nullable();
-            $table->string('pan_no', 20)->nullable();
-            $table->smallInteger('is_taxpayer')->nullable();
+            $table->smallInteger('has_pan_card')->nullable();
         });
     }
 
@@ -25,7 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('pension.beneficiary_personals', function (Blueprint $table) {
-            $table->dropColumn(['ration_card_no', 'epic_card_no', 'pan_no', 'is_taxpayer']);
+            $table->dropColumn('has_pan_card');
         });
     }
 };

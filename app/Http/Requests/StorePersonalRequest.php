@@ -145,16 +145,16 @@ class StorePersonalRequest extends FormRequest
             'captcha_answer' => Config::get('constants.enable_captcha')
                 ? ['required', new ValidateCaptchaRule($this->captcha_token)]
                 : ['nullable'],
-            'marital_status' => 'nullable|string',
+            'marital_status' => 'required_with:data|in:'.implode(",", $marital_status_key),
             'spouse_first_name' => 'nullable|string|max:200',
             'spouse_middle_name' => 'nullable|string|max:200',
             'spouse_last_name' => 'nullable|string|max:200',
             'email' => 'nullable|email|max:200',
             'ration_card_no' => 'nullable|string|min:8|max:20|regex:/^[A-Za-z0-9]+$/',
             'epic_card_no' => 'required_with:data|string|min:8|max:20|regex:/^[A-Za-z0-9]+$/',
-            'has_pan_card' => 'required_with:data|string|in:yes,no',
-            'pan_no' => 'required_if:has_pan_card,yes|nullable|string|size:10|regex:/^[A-Za-z]{5}[0-9]{4}[A-Za-z]{1}$/',
-            'is_taxpayer' => 'required_with:data|string|in:yes,no',
+            'has_pan_card' => 'required_with:data|string|in:1,0',
+            'pan_no' => 'required_if:has_pan_card,1|nullable|string|size:10|regex:/^[A-Za-z]{5}[0-9]{4}[A-Za-z]{1}$/',
+            'is_taxpayer' => 'required_with:data|string|in:1,0',
         ];
     }
 

@@ -359,6 +359,7 @@ class PensionFormController extends Controller
                 'epic_card_no' => trim($validated['epic_card_no']),
                 'pan_no' => trim($validated['pan_no']),
                 'is_taxpayer' => trim($validated['is_taxpayer']),
+                'has_pan_card' => $validated['has_pan_card'],
                 'marital_status' => $validated['marital_status'] ?? null,
             ];
             // AADHAAR PAYLOAD
@@ -1067,7 +1068,9 @@ class PensionFormController extends Controller
                 'ration_card_no'     => $personal->ration_card_no ?? '',
                 'epic_card_no'       => $personal->epic_card_no ?? '',
                 'pan_no'             => $personal->pan_no ?? '',
-                'is_taxpayer'        => $personal->is_taxpayer ?? 'no',
+                'is_taxpayer'        => $personal->is_taxpayer ?? '0',
+                'has_pan_card'       => $personal->has_pan_card ?? '0',
+                'is_final'           => (int)($personal->is_final ?? 0),
                 'application_date'   => $personal->application_date,
             ];
 

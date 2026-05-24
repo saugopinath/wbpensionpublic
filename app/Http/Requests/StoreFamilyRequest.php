@@ -43,12 +43,12 @@ class StoreFamilyRequest extends FormRequest
             'application_id' => 'required',
             'family_members' => 'required|array|min:1',
             'family_members.*.name' => 'required|string|max:255',
-            'family_members.*.is_govt_employee' => 'required|in:yes,no',
-            'family_members.*.pays_income_tax' => 'required|in:yes,no',
+            'family_members.*.is_govt_employee' => 'required|in:1,0',
+            'family_members.*.pays_income_tax' => 'required|in:1,0',
             'family_members.*.school_details' => 'required|string|max:500',
             'family_members.*.vaccination_details' => 'required|string|max:500',
             'family_members.*.family_income' => 'required|numeric',
-            'family_members.*.has_four_wheeler' => 'required|in:yes,no',
+            'family_members.*.has_four_wheeler' => 'required|in:1,0',
             'captcha_token' => Config::get('constants.enable_captcha') ? 'required' : 'nullable',
             'captcha_answer' => Config::get('constants.enable_captcha') 
                 ? ['required', new ValidateCaptchaRule($this->captcha_token)]
